@@ -308,12 +308,13 @@ Battle.escape = function () {
 };
 
 Battle.returnWorld = function () {
+  const p = State.player;
   const go = () => {
     State.battle = null;
     Battle.clearLog();
     UI.showScreen("world");
     if (World.resume) World.resume();
-    if (typeof Music !== "undefined") Music.playForMap(p.map);
+    if (typeof Music !== "undefined" && p) Music.playForMap(p.map);
     World.draw();
     UI.updateHud();
     if (typeof Game !== "undefined" && Game.autosave) Game.autosave("battle");

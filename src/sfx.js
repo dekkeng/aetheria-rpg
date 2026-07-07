@@ -162,10 +162,14 @@ FX.transition = function (cb, color) {
   el.style.background = color || "#0a0916";
   el.classList.add("in");
   setTimeout(() => {
-    cb && cb();
-    el.classList.remove("in");
-    el.classList.add("out");
-    setTimeout(() => el.classList.remove("out"), 320);
+    // กันจอดำค้าง: ต่อให้ cb โยน error ก็ต้อง fade กลับเสมอ
+    try { cb && cb(); }
+    catch (err) { console.error("[FX.transition] callback error:", err); }
+    finally {
+      el.classList.remove("in");
+      el.classList.add("out");
+      setTimeout(() => el.classList.remove("out"), 320);
+    }
   }, 230);
 };
 
