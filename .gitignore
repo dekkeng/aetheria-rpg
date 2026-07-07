@@ -6,6 +6,11 @@ node_modules/
 *.sqlite
 *.sqlite3
 
+# Env / secrets
+.env
+.env.local
+.env.*.local
+
 # Logs
 *.log
 

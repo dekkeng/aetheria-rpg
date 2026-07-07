@@ -17,7 +17,11 @@ function makePg() {
     console.error("[db] ตั้ง DATABASE_URL ไว้แต่ยังไม่ได้ติดตั้ง 'pg' — รัน: npm install pg");
     process.exit(1);
   }
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    // เปิด SSL เมื่อต่อ Postgres ภายนอก (เช่น public URL ของ Railway/Neon/Supabase)
+    ssl: process.env.DATABASE_SSL === "true" ? { rejectUnauthorized: false } : undefined,
+  });
 
   return {
     kind: "postgres",

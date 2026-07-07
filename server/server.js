@@ -3,6 +3,7 @@
  * Auth (register/login), cloud save, play history, เสิร์ฟไฟล์เกม
  * รันด้วย: node --experimental-sqlite server.js
  * ========================================================== */
+require("dotenv").config();
 const path = require("path");
 const http = require("http");
 const express = require("express");
