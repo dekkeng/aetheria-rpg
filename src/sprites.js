@@ -44,10 +44,10 @@ Sprites.load = function (done) {
 /* ---------- วาดฮีโร่ลง canvas ----------
  * ctx, class, dir, dx, dy (มุมซ้ายบนของช่อง), size, moving */
 Sprites.drawHero = function (ctx, cls, dir, dx, dy, size, moving) {
-  if (!Sprites.ready) return;
+  if (!Sprites.ready) return false;
   const H = Sprites.man.heroes;
   const row = H.rows[cls + "_" + dir];
-  if (row === undefined) return;
+  if (row === undefined) return false;
   const frame = moving ? Sprites.walkFrame(H.walk) : Sprites.idleFrame(H.idle);
   const c = H.cell;
   ctx.imageSmoothingEnabled = false;
@@ -56,6 +56,7 @@ Sprites.drawHero = function (ctx, cls, dir, dx, dy, size, moving) {
   const ox = dx + (size - drawSize) / 2;
   const oy = dy + size - drawSize + size * 0.18;
   ctx.drawImage(Sprites.img.heroes, frame * c, row * c, c, c, ox, oy, drawSize, drawSize);
+  return true;   // คืน true เพื่อให้ผู้เรียกรู้ว่าวาด sprite สำเร็จ (ไม่ต้อง fallback emoji)
 };
 
 /* วาดฮีโร่แบบเต็มช่อง (ใช้ในฉากต่อสู้ — เติมเต็ม canvas) */
