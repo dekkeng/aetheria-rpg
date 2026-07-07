@@ -27,6 +27,74 @@
       0
     ]
   },
+  "weapons": {
+    "cell": 48,
+    "frames": 4,
+    "rows": {
+      "wood_sword_down": 0,
+      "wood_sword_up": 1,
+      "wood_sword_left": 2,
+      "wood_sword_right": 3,
+      "iron_sword_down": 4,
+      "iron_sword_up": 5,
+      "iron_sword_left": 6,
+      "iron_sword_right": 7,
+      "flame_blade_down": 8,
+      "flame_blade_up": 9,
+      "flame_blade_left": 10,
+      "flame_blade_right": 11,
+      "frost_edge_down": 12,
+      "frost_edge_up": 13,
+      "frost_edge_left": 14,
+      "frost_edge_right": 15,
+      "mythril_bow_down": 16,
+      "mythril_bow_up": 17,
+      "mythril_bow_left": 18,
+      "mythril_bow_right": 19
+    },
+    "idle": [
+      0,
+      1
+    ],
+    "walk": [
+      2,
+      0,
+      3,
+      0
+    ]
+  },
+  "armor": {
+    "cell": 48,
+    "frames": 4,
+    "rows": {
+      "leather_armor_down": 0,
+      "leather_armor_up": 1,
+      "leather_armor_left": 2,
+      "leather_armor_right": 3,
+      "iron_armor_down": 4,
+      "iron_armor_up": 5,
+      "iron_armor_left": 6,
+      "iron_armor_right": 7,
+      "dragon_mail_down": 8,
+      "dragon_mail_up": 9,
+      "dragon_mail_left": 10,
+      "dragon_mail_right": 11,
+      "aether_robe_down": 12,
+      "aether_robe_up": 13,
+      "aether_robe_left": 14,
+      "aether_robe_right": 15
+    },
+    "idle": [
+      0,
+      1
+    ],
+    "walk": [
+      2,
+      0,
+      3,
+      0
+    ]
+  },
   "enemies": {
     "cell": 48,
     "frames": 2,

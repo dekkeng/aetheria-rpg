@@ -60,7 +60,7 @@ Battle.drawSprites = function () {
   if (hc && hc.getContext) {
     const hx = hc.getContext("2d");
     hx.clearRect(0, 0, hc.width, hc.height);
-    Sprites.drawHeroBattle(hx, p.classId, "right", hc.width);
+    Sprites.drawHeroBattle(hx, p.classId, "right", hc.width, p.equip);
     // คู่หูสัตว์เลี้ยงยืนข้างๆ (มุมล่างซ้าย)
     const pet = (typeof Pets !== "undefined") ? Pets.active(p) : null;
     if (pet && Sprites.drawPet) {

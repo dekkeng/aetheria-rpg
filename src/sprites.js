@@ -30,7 +30,7 @@ Sprites.walkFrame = function (frames) {
 /* โหลด sheet ทั้งหมด */
 Sprites.load = function (done) {
   Sprites.man = window.SPRITE_MANIFEST;
-  const files = ["heroes", "enemies", "items", "tiles", "npcs", "pets"];
+  const files = ["heroes", "weapons", "armor", "enemies", "items", "tiles", "npcs", "pets"];
   let left = files.length;
   files.forEach((name) => {
     const im = new Image();
@@ -43,7 +43,7 @@ Sprites.load = function (done) {
 
 /* ---------- วาดฮีโร่ลง canvas ----------
  * ctx, class, dir, dx, dy (มุมซ้ายบนของช่อง), size, moving */
-Sprites.drawHero = function (ctx, cls, dir, dx, dy, size, moving) {
+Sprites.drawHero = function (ctx, cls, dir, dx, dy, size, moving, equip) {
   if (!Sprites.ready) return false;
   const H = Sprites.man.heroes;
   const row = H.rows[cls + "_" + dir];
@@ -56,19 +56,36 @@ Sprites.drawHero = function (ctx, cls, dir, dx, dy, size, moving) {
   const ox = dx + (size - drawSize) / 2;
   const oy = dy + size - drawSize + size * 0.12;
   ctx.drawImage(Sprites.img.heroes, frame * c, row * c, c, c, ox, oy, drawSize, drawSize);
+  // ---- ชุด/อาวุธที่สวมใส่ (overlay แนบเฟรมเดียวกัน) ----
+  Sprites.drawGear(ctx, "armor", equip && equip.armor, dir, frame, ox, oy, drawSize);
+  Sprites.drawGear(ctx, "weapons", equip && equip.weapon, dir, frame, ox, oy, drawSize);
   return true;   // คืน true เพื่อให้ผู้เรียกรู้ว่าวาด sprite สำเร็จ (ไม่ต้อง fallback emoji)
 };
 
+/* วาด overlay อุปกรณ์ (เกราะ/อาวุธ) ทับตัวฮีโร่ ตำแหน่ง/เฟรมตรงกับฐาน */
+Sprites.drawGear = function (ctx, kind, itemId, dir, frame, ox, oy, drawSize) {
+  if (!itemId) return;
+  const G = Sprites.man[kind];
+  if (!G) return;
+  const row = G.rows[itemId + "_" + dir];
+  if (row === undefined) return;         // ไอเทมนี้ไม่มีภาพสวมใส่ (เช่นเกราะระดับที่ยังไม่ทำ)
+  const c = G.cell;
+  ctx.drawImage(Sprites.img[kind], frame * c, row * c, c, c, ox, oy, drawSize, drawSize);
+};
+
 /* วาดฮีโร่แบบเต็มช่อง (ใช้ในฉากต่อสู้ — เติมเต็ม canvas) */
-Sprites.drawHeroBattle = function (ctx, cls, dir, size) {
+Sprites.drawHeroBattle = function (ctx, cls, dir, size, equip) {
   if (!Sprites.ready) return;
   const H = Sprites.man.heroes;
-  const row = H.rows[cls + "_" + (dir || "right")];
+  dir = dir || "right";
+  const row = H.rows[cls + "_" + dir];
   if (row === undefined) return;
   const frame = Sprites.idleFrame(H.idle);   // หายใจอยู่กับที่
   const c = H.cell;
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(Sprites.img.heroes, frame * c, row * c, c, c, 0, 0, size, size);
+  Sprites.drawGear(ctx, "armor", equip && equip.armor, dir, frame, 0, 0, size);
+  Sprites.drawGear(ctx, "weapons", equip && equip.weapon, dir, frame, 0, 0, size);
 };
 
 /* วาดมอนสเตอร์ (idle) — ใช้ทั้งบนแผนที่และในฉากต่อสู้

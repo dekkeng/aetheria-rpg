@@ -282,7 +282,7 @@ World.draw = function () {
       ents.push({
         z: o.y + 1,
         draw: () => {
-          if (spr && !Sprites.drawHero(ctx, o.cls || "warrior", "down", ox, oy, T, false)) {
+          if (spr && !Sprites.drawHero(ctx, o.cls || "warrior", "down", ox, oy, T, false, { weapon: o.weapon, armor: o.armor })) {
             ctx.font = `${T - 6}px serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("🧑", ox + T / 2, oy + T / 2);
           }
           ctx.font = "600 11px Kanit, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "bottom";
@@ -299,7 +299,7 @@ World.draw = function () {
   ents.push({
     z: p.fy + 0.5,          // เท้าผู้เล่น
     draw: () => {
-      if (spr) Sprites.drawHero(ctx, p.classId, World.facing, psx, psy, T, moving);
+      if (spr) Sprites.drawHero(ctx, p.classId, World.facing, psx, psy, T, moving, p.equip);
       else {
         const cls = GameData.classes.find((c) => c.id === p.classId);
         ctx.font = `${T - 4}px serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";

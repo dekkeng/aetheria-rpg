@@ -191,6 +191,80 @@ def build_heroes():
     return {"cell": S, "frames": frames, "rows": layout,
             "idle": [0, 1], "walk": [2, 0, 3, 0]}
 
+# ---------------- equipment overlays (chibi, ใช้ได้ทุกอาชีพ) ----------------
+# key = item id ; วาดแนบกับโครง chibi เดียวกับฮีโร่ (มือขวา/ลำตัว)
+WEAPON_LOOK = {
+    "wood_sword":  ("sword", (170,122,72,255),  (202,152,98,255),  (96,66,40,255)),
+    "iron_sword":  ("sword", (208,214,224,255),  (242,246,252,255), (110,84,52,255)),
+    "flame_blade": ("sword", (242,122,54,255),   (255,192,92,255),  (92,40,30,255)),
+    "frost_edge":  ("sword", (150,220,240,255),  (214,246,255,255), (70,110,130,255)),
+    "mythril_bow": ("bow",   (122,206,216,255),  (206,246,251,255), (232,232,212,255)),
+}
+ARMOR_LOOK = {
+    "leather_armor": ((150,104,60,255),  (192,142,92,255),  (110,74,44,255)),
+    "iron_armor":    ((150,160,178,255), (198,208,224,255), (96,104,122,255)),
+    "dragon_mail":   ((112,52,52,255),   (172,82,74,255),   (70,30,32,255)),
+    "aether_robe":   ((150,110,210,255), (202,172,246,255), (96,66,150,255)),
+}
+
+def draw_weapon(look, direction, frame):
+    flip = (direction == "left")
+    img = new_cell(S, S); d = ImageDraw.Draw(img)
+    shape, blade, hi, hilt = WEAPON_LOOK[look]
+    bob, legA, legB, arm = hero_anim(frame)
+    cx = CX; by0 = 27 + bob
+    if shape == "sword":
+        hy = by0 + 9 - arm                              # มือขวา
+        rect(d, cx+7, hy-15, cx+9, hy, blade)           # ใบดาบ
+        rect(d, cx+7, hy-15, cx+7, hy, hi)              # คมสว่าง
+        rect(d, cx+6, hy-17, cx+9, hy-14, hi)           # ปลายแหลม
+        rect(d, cx+5, hy-1, cx+11, hy+1, hilt)          # การ์ด
+        rect(d, cx+7, hy+1, cx+9, hy+4, hilt)           # ด้าม
+    else:                                               # ธนู (มือซ้าย)
+        hy = by0 + 9 + arm
+        d.arc([cx-13, hy-13, cx-3, hy+9], 300, 60, fill=blade, width=2)
+        d.line([(cx-4, hy-11), (cx-4, hy+7)], fill=hi, width=1)
+    add_outline(img, (26,22,38,210))
+    if flip: img = img.transpose(Image.FLIP_LEFT_RIGHT)
+    return img
+
+def draw_armor(look, direction, frame):
+    flip = (direction == "left")
+    img = new_cell(S, S); d = ImageDraw.Draw(img)
+    main, hi, sh = ARMOR_LOOK[look]
+    bob, legA, legB, arm = hero_anim(frame)
+    cx = CX; by0, by1 = 27 + bob, 40 + bob
+    if look == "aether_robe":                           # ชุดคลุมยาว
+        d.polygon([(cx-7,by1-4),(cx-10,by1+2),(cx+10,by1+2),(cx+7,by1-4)], fill=main)
+        rect(d, cx-10, by1, cx+10, by1+2, sh)
+    rect(d, cx-7, by0, cx+7, by1-1, main)               # อกเกราะ
+    rect(d, cx-7, by0, cx+7, by0+3, hi)                 # ไฮไลต์บน
+    rect(d, cx-7, by1-3, cx+7, by1-1, sh)               # เงาล่าง
+    rect(d, cx-9, by0+1, cx-6, by0+5, main); rect(d, cx-9, by0+1, cx-6, by0+2, hi)   # บ่าซ้าย
+    rect(d, cx+6, by0+1, cx+9, by0+5, main); rect(d, cx+6, by0+1, cx+9, by0+2, hi)   # บ่าขวา
+    if look == "aether_robe":
+        rect(d, cx-1, by0, cx+1, by1-1, (240,210,90,255))          # แถบทอง
+    elif look == "dragon_mail":
+        for yy in range(by0+3, by1-2, 3):
+            d.line([(cx-6, yy), (cx+6, yy)], fill=sh, width=1)      # เกล็ด
+    else:
+        d.line([(cx, by0+2), (cx, by1-3)], fill=sh, width=1)
+    add_outline(img, (26,22,38,190))
+    if flip: img = img.transpose(Image.FLIP_LEFT_RIGHT)
+    return img
+
+def build_gear(kind, looks, drawfn):
+    order = list(looks.keys()); rows = {}
+    sheet = Image.new("RGBA", (S*4, S*len(order)*len(DIRS)), (0,0,0,0))
+    r = 0
+    for look in order:
+        for direction in DIRS:
+            for f in range(4):
+                sheet.paste(drawfn(look, direction, f), (f*S, r*S), drawfn(look, direction, f))
+            rows[f"{look}_{direction}"] = r; r += 1
+    sheet.save(os.path.join(OUT, kind + ".png"))
+    return {"cell": S, "frames": 4, "rows": rows, "idle": [0, 1], "walk": [2, 0, 3, 0]}
+
 # ---------------- enemies ----------------
 E = 48
 def draw_enemy(kind, frame):
@@ -681,6 +755,8 @@ def build_tiles():
 # ---------------- run ----------------
 manifest = {
     "heroes": build_heroes(),
+    "weapons": build_gear("weapons", WEAPON_LOOK, draw_weapon),
+    "armor": build_gear("armor", ARMOR_LOOK, draw_armor),
     "enemies": build_enemies(),
     "items": build_items(),
     "npcs": build_npcs(),

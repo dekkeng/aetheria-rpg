@@ -57,7 +57,9 @@ Net.send = function (obj) {
 Net.sendState = function (type) {
   if (!State.player) return;
   const p = State.player;
-  Net.send({ type: type || "move", map: p.map, x: p.x, y: p.y, cls: p.classId, name: p.name });
+  const eq = p.equip || {};
+  Net.send({ type: type || "move", map: p.map, x: p.x, y: p.y, cls: p.classId, name: p.name,
+             weapon: eq.weapon || null, armor: eq.armor || null });
 };
 
 /* เรียกจาก World.move — throttle การส่ง */
