@@ -43,7 +43,10 @@ Net.connect = function () {
       if (State.player && m.map === State.player.map)
         Net.others = m.list.filter((pl) => pl.id !== Net.id);
     }
-    else if (m.type === "chat") { if (Net.onChat) Net.onChat(m); }
+    else if (m.type === "chat") {
+      Net.addBubble(m.id, m.text);       // ฟองแชทเหนือหัวตัวละคร
+      if (Net.onChat) Net.onChat(m);     // แสดงในหน้าต่างแชทด้วย
+    }
   };
 };
 
@@ -63,6 +66,33 @@ Net.moved = function () {
   if (now - Net.lastSend < 110) return;
   Net.lastSend = now;
   Net.sendState("move");
+};
+
+/* ---------- ฟองแชทเหนือหัว ---------- */
+Net.bubbles = {};          // id -> [{ text, exp }]  (ใหม่สุดอยู่ท้าย array)
+Net.BUBBLE_MS = 5000;      // แสดง 5 วินาที
+
+Net.addBubble = function (id, text) {
+  if (id == null) return;
+  text = ("" + text).trim();
+  if (!text) return;
+  (Net.bubbles[id] || (Net.bubbles[id] = [])).push({ text, exp: performance.now() + Net.BUBBLE_MS });
+  if (Net.bubbles[id].length > 4) Net.bubbles[id].shift();   // จำกัดสูงสุด 4 ฟอง/คน
+  // เก็บกวาดฟองหมดอายุของทุกคน (กันหน่วยความจำรก)
+  const now = performance.now();
+  for (const k in Net.bubbles) {
+    Net.bubbles[k] = Net.bubbles[k].filter((b) => b.exp > now);
+    if (!Net.bubbles[k].length) delete Net.bubbles[k];
+  }
+};
+
+/* คืนฟองที่ยังไม่หมดอายุของ id (เรียงเก่า->ใหม่) หรือ null */
+Net.bubblesFor = function (id) {
+  const arr = Net.bubbles[id];
+  if (!arr || !arr.length) return null;
+  const now = performance.now();
+  const live = arr.filter((b) => b.exp > now);
+  return live.length ? live : null;
 };
 
 Net.sendChat = function (text) {

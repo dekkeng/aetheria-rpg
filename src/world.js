@@ -341,7 +341,58 @@ World.draw = function () {
   ents.sort((a, b) => a.z - b.z);
   ents.forEach((e) => e.draw());
 
+  // ---- PASS 3: ฟองแชทเหนือหัว (บนสุดเสมอ) ----
+  if (typeof Net !== "undefined" && Net.bubblesFor) {
+    const mine = Net.bubblesFor(Net.id);
+    if (mine) World.drawBubbles(ctx, (p.fx - camX) * T, (p.fy - camY) * T - T * 0.85, mine);
+    if (Net.others) Net.others.forEach((o) => {
+      const ob = Net.bubblesFor(o.id);
+      if (!ob) return;
+      World.drawBubbles(ctx, (o.x + 0.5 - camX) * T, (o.y + 0.5 - camY) * T - T * 0.85 - 16, ob);
+    });
+  }
+
   const mn = UI.$("#map-name"); if (mn) mn.textContent = map.name;
+};
+
+/* วาดสแต็กฟองแชทเหนือหัว: ใหม่สุดอยู่ล่าง (ติดหัว), เก่าดันขึ้นบน, จางตอนใกล้หมดเวลา */
+World.drawBubbles = function (ctx, cx, bottomY, list) {
+  ctx.save();
+  ctx.font = "600 12px Kanit, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  const H = 20, GAP = 4, PADX = 9, MAXW = 200, now = performance.now();
+  let y = bottomY;
+  for (let i = list.length - 1; i >= 0; i--) {
+    const b = list[i];
+    let txt = b.text;
+    if (ctx.measureText(txt).width + PADX * 2 > MAXW) {   // ยาวเกิน -> ตัดด้วย …
+      while (txt.length > 1 && ctx.measureText(txt + "…").width + PADX * 2 > MAXW) txt = txt.slice(0, -1);
+      txt += "…";
+    }
+    const bw = ctx.measureText(txt).width + PADX * 2, x = cx - bw / 2, top = y - H;
+    ctx.globalAlpha = Math.max(0, Math.min(1, (b.exp - now) / 500));  // จางใน 0.5 วิสุดท้าย
+    ctx.fillStyle = "rgba(18,15,38,0.9)";
+    World._roundRect(ctx, x, top, bw, H, 8); ctx.fill();
+    ctx.strokeStyle = "rgba(166,139,255,0.55)"; ctx.lineWidth = 1; ctx.stroke();
+    if (i === list.length - 1) {   // หางฟองเฉพาะอันล่างสุด (ชี้ลงหัว)
+      ctx.beginPath();
+      ctx.moveTo(cx - 5, top + H - 1); ctx.lineTo(cx + 5, top + H - 1); ctx.lineTo(cx, top + H + 5);
+      ctx.closePath(); ctx.fill();
+    }
+    ctx.fillStyle = "#ece9ff";
+    ctx.fillText(txt, cx, top + H / 2 + 0.5);
+    y = top - GAP;
+  }
+  ctx.restore();
+};
+
+World._roundRect = function (ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  if (ctx.roundRect) { ctx.roundRect(x, y, w, h, r); return; }
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
 };
 
 /* เครื่องหมายเหนือ NPC: ! เควสใหม่ · ? กำลังทำ · 🛒 ร้าน */

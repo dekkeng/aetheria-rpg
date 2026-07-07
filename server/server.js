@@ -170,7 +170,7 @@ wss.on("connection", (ws, req) => {
       broadcastMap(c.map);
     } else if (m.type === "chat") {
       const text = ("" + (m.text || "")).slice(0, 200).trim();
-      if (text) broadcastAll({ type: "chat", name: c.name, text, ts: Date.now() });
+      if (text) broadcastAll({ type: "chat", id: c.id, name: c.name, text, ts: Date.now() });
     }
   });
 
