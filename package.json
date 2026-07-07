@@ -1,0 +1,21 @@
+{
+  "name": "aetheria-rpg",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Aetheria RPG — browser RPG with auth, cloud save, and realtime multiplayer",
+  "type": "commonjs",
+  "main": "server/server.js",
+  "engines": {
+    "node": ">=22.5"
+  },
+  "scripts": {
+    "start": "node --experimental-sqlite server/server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.11.5",
+    "ws": "^8.21.0"
+  }
+}
