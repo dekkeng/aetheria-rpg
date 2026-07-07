@@ -11,8 +11,11 @@ UI.$$ = (sel) => Array.from(document.querySelectorAll(sel));
 /* ไอคอนไอเทม: ใช้ pixel sprite ถ้าโหลดแล้ว ไม่งั้น fallback เป็น emoji */
 UI.itemIcon = function (itemId, px) {
   const it = GameData.items[itemId];
-  if (typeof Sprites !== "undefined" && Sprites.ready) return Sprites.itemIcon(itemId, px || 32);
-  return `<span style="font-size:22px">${it ? it.icon : "❔"}</span>`;
+  px = px || 32;
+  // ใช้ pixel sprite ถ้ามีในชีต ไม่งั้น fallback เป็น emoji ให้เห็นเสมอ
+  if (typeof Sprites !== "undefined" && Sprites.ready && Sprites.man && Sprites.man.items && Sprites.man.items.map[itemId])
+    return Sprites.itemIcon(itemId, px);
+  return `<span class="item-emoji" style="font-size:${Math.round(px * 0.7)}px;line-height:${px}px">${it ? it.icon : "❔"}</span>`;
 };
 
 /* สลับหน้าจอหลัก */
@@ -261,46 +264,100 @@ UI.openSkills = function () {
 };
 
 /* ---------- กระเป๋า / ไอเทม ---------- */
+UI.SLOT_LABEL = { weapon: "อาวุธ", armor: "เกราะ" };
+UI.SLOT_PH = { weapon: "🗡️", armor: "🛡️" };
+
 UI.openInventory = function () {
   const p = State.player;
-  let rows = p.inventory
-    .map((slot) => {
-      const it = GameData.items[slot.id];
-      if (!it) return "";
-      let action = "";
-      if (it.type === "consume") action = `<button class="btn tiny" data-use="${it.id}">ใช้</button>`;
-      else if (it.type === "weapon") action = `<button class="btn tiny" data-equip="${it.id}">สวม</button>`;
-      else if (it.type === "armor") action = `<button class="btn tiny" data-equip="${it.id}">สวม</button>`;
-      else if (it.type === "skillbook") action = `<button class="btn tiny" data-learn="${it.id}">เรียนรู้</button>`;
-      else if (it.type === "petegg") action = `<button class="btn tiny" data-hatch="${it.id}">ฟัก 🐣</button>`;
-      else if (it.type === "petfood") action = `<button class="btn tiny" data-petmenu="1">ให้อาหาร</button>`;
-      const equipped = (p.equip.weapon === it.id || p.equip.armor === it.id) ? ' <span class="badge">สวมอยู่</span>' : "";
-      return `<li>
-        <span class="it-ic">${UI.itemIcon(it.id)}</span>
-        <span class="it-name">${it.name}${equipped}<small>${it.desc || ""}</small></span>
-        <span class="it-qty">x${slot.qty}</span>
-        ${action}
-      </li>`;
-    })
-    .join("");
-  if (!rows) rows = '<li class="empty">กระเป๋าว่างเปล่า</li>';
-  UI.openOverlay(`<h2>🎒 กระเป๋า</h2><ul class="item-list">${rows}</ul>`);
+  if (!p.equip) p.equip = { weapon: null, armor: null };
 
-  UI.$$("[data-use]").forEach((b) =>
-    b.addEventListener("click", () => { UI.useItem(b.dataset.use); UI.openInventory(); })
-  );
-  UI.$$("[data-equip]").forEach((b) =>
-    b.addEventListener("click", () => { UI.equipItem(b.dataset.equip); UI.openInventory(); })
-  );
-  UI.$$("[data-learn]").forEach((b) =>
-    b.addEventListener("click", () => { UI.learnFromBook(b.dataset.learn); UI.openInventory(); })
-  );
-  UI.$$("[data-hatch]").forEach((b) =>
-    b.addEventListener("click", () => Pets.hatchEgg(b.dataset.hatch))
-  );
-  UI.$$("[data-petmenu]").forEach((b) =>
-    b.addEventListener("click", () => Pets.openMenu())
-  );
+  // ---- ช่องสวมใส่ (ด้านบน) ----
+  const eqHtml = ["weapon", "armor"].map((slot) => {
+    const id = p.equip[slot];
+    if (id && GameData.items[id]) {
+      const it = GameData.items[id];
+      return `<button class="eq-slot filled" data-uneq="${slot}" data-id="${id}" title="แตะเพื่อถอด">
+        <span class="eq-ic">${UI.itemIcon(id, 40)}</span>
+        <span class="eq-lb">${UI.SLOT_LABEL[slot]}<small>${it.name}</small></span>
+      </button>`;
+    }
+    return `<div class="eq-slot empty">
+      <span class="eq-ic ph">${UI.SLOT_PH[slot]}</span>
+      <span class="eq-lb">${UI.SLOT_LABEL[slot]}<small>— ว่าง —</small></span>
+    </div>`;
+  }).join("");
+
+  // ---- กริดไอเทม (ภาพ + จำนวน) ----
+  const cells = p.inventory.map((slot) => {
+    const it = GameData.items[slot.id];
+    if (!it) return "";
+    const q = slot.qty > 1 ? `<span class="cell-q">${slot.qty}</span>` : "";
+    return `<button class="inv-cell" data-id="${slot.id}">
+      <span class="cell-ic">${UI.itemIcon(slot.id, 40)}</span>${q}
+    </button>`;
+  }).join("");
+  const gridHtml = cells || '<p class="empty">กระเป๋าว่างเปล่า</p>';
+
+  UI.openOverlay(`
+    <h2>🎒 กระเป๋า</h2>
+    <p class="inv-section">สวมใส่อยู่</p>
+    <div class="equip-slots">${eqHtml}</div>
+    <p class="inv-section">ไอเทม</p>
+    <div class="inv-grid">${gridHtml}</div>
+    <div class="inv-detail" id="inv-detail"><p class="hint">ชี้หรือแตะไอเทมเพื่อดูรายละเอียด</p></div>
+  `);
+
+  UI.$$("[data-uneq]").forEach((b) => {
+    const show = () => UI.showItemDetail(b.dataset.id, b.dataset.uneq);
+    b.addEventListener("mouseenter", show);
+    b.addEventListener("click", show);
+  });
+  UI.$$(".inv-cell").forEach((b) => {
+    const show = () => UI.showItemDetail(b.dataset.id, null);
+    b.addEventListener("mouseenter", show);
+    b.addEventListener("focus", show);
+    b.addEventListener("click", show);
+  });
+};
+
+/* แสดงรายละเอียดไอเทมในกล่องด้านล่าง + ปุ่มแอ็กชัน (equippedSlot != null = กำลังสวมอยู่) */
+UI.showItemDetail = function (itemId, equippedSlot) {
+  const box = UI.$("#inv-detail");
+  if (!box) return;
+  const it = GameData.items[itemId];
+  if (!it) { box.innerHTML = '<p class="hint">—</p>'; return; }
+  const TYPE_LABEL = { weapon: "อาวุธ", armor: "เกราะ", consume: "ของใช้", skillbook: "ตำราสกิล",
+    petegg: "ไข่สัตว์เลี้ยง", petfood: "อาหารสัตว์", material: "วัตถุดิบ", key: "ไอเทมเนื้อเรื่อง" };
+  const stat = TYPE_LABEL[it.type] || "";
+
+  let act = "";
+  if (equippedSlot) act = `<button class="btn tiny danger" id="inv-act" data-act="unequip" data-slot="${equippedSlot}">ถอด</button>`;
+  else if (it.type === "consume") act = `<button class="btn tiny" id="inv-act" data-act="use">ใช้</button>`;
+  else if (it.type === "weapon" || it.type === "armor") act = `<button class="btn tiny" id="inv-act" data-act="equip">สวมใส่</button>`;
+  else if (it.type === "skillbook") act = `<button class="btn tiny" id="inv-act" data-act="learn">เรียนรู้</button>`;
+  else if (it.type === "petegg") act = `<button class="btn tiny" id="inv-act" data-act="hatch">ฟัก 🐣</button>`;
+  else if (it.type === "petfood") act = `<button class="btn tiny" id="inv-act" data-act="feed">ให้อาหาร</button>`;
+
+  box.innerHTML = `
+    <div class="det-ic">${UI.itemIcon(itemId, 44)}</div>
+    <div class="det-info">
+      <b>${it.name}</b>
+      ${stat ? `<span class="det-stat">${stat.trim()}</span>` : ""}
+      <small>${it.desc || ""}</small>
+    </div>
+    ${act}`;
+
+  const btn = UI.$("#inv-act");
+  if (!btn) return;
+  btn.addEventListener("click", () => {
+    const a = btn.dataset.act;
+    if (a === "unequip") { UI.unequipSlot(btn.dataset.slot); UI.openInventory(); }
+    else if (a === "use") { UI.useItem(itemId); UI.openInventory(); }
+    else if (a === "equip") { UI.equipItem(itemId); UI.openInventory(); }
+    else if (a === "learn") { UI.learnFromBook(itemId); UI.openInventory(); }
+    else if (a === "hatch") { Pets.hatchEgg(itemId); }
+    else if (a === "feed") { Pets.openMenu(); }
+  });
 };
 
 /* ใช้ตำราสกิล — เรียนรู้สกิลใหม่ หรืออัพสกิลที่มีอยู่ */
@@ -336,14 +393,43 @@ UI.useItem = function (itemId, inBattle) {
   return used;
 };
 
+/* สวมใส่: ย้ายไอเทมออกจากกระเป๋าไปช่องสวมใส่ (ของเดิมในช่องเด้งกลับกระเป๋า) */
 UI.equipItem = function (itemId) {
   const p = State.player;
   const it = GameData.items[itemId];
-  if (!it) return;
-  if (it.type === "weapon") p.equip.weapon = itemId;
-  else if (it.type === "armor") p.equip.armor = itemId;
+  if (!it || (it.type !== "weapon" && it.type !== "armor")) return;
+  if (!p.equip) p.equip = { weapon: null, armor: null };
+  if (State.countItem(p, itemId) <= 0) return;
+  const slot = it.type;               // "weapon" | "armor"
+  const prev = p.equip[slot];
+  State.removeItem(p, itemId, 1);      // ออกจากกระเป๋า
+  if (prev) State.addItem(p, prev, 1); // ของเดิมกลับเข้ากระเป๋า
+  p.equip[slot] = itemId;
+  if (typeof SFX !== "undefined") SFX.play("select");
   UI.toast(`สวม ${it.name}`);
+  UI.afterEquipChange();
+};
+
+/* ถอด: คืนไอเทมจากช่องสวมใส่กลับเข้ากระเป๋า */
+UI.unequipSlot = function (slot) {
+  const p = State.player;
+  if (!p.equip) return;
+  const id = p.equip[slot];
+  if (!id) return;
+  p.equip[slot] = null;
+  State.addItem(p, id, 1);
+  if (typeof SFX !== "undefined") SFX.play("menu");
+  UI.toast(`ถอด ${GameData.items[id] ? GameData.items[id].name : ""}`);
+  UI.afterEquipChange();
+};
+
+/* อัปเดตหลังเปลี่ยนอุปกรณ์: HUD + วาดตัวละครใหม่ + broadcast + เซฟ */
+UI.afterEquipChange = function () {
+  const p = State.player;
   UI.updateHud();
+  if (typeof World !== "undefined" && World.draw && State.screen === "world") World.draw();
+  if (typeof Net !== "undefined" && Net.sendState) Net.sendState("move");   // ให้คนอื่นเห็นชุดที่เปลี่ยน
+  if (typeof Game !== "undefined" && Game.autosave) Game.autosave("equip");
 };
 
 /* ---------- เควส ---------- */

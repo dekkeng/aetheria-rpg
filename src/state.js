@@ -165,6 +165,7 @@ State.ensureProgression = function (p) {
   if (typeof p.skillPoints !== "number") p.skillPoints = 0;
   if (!Array.isArray(p.pets)) p.pets = [];
   if (p.activePet === undefined) p.activePet = null;
+  if (!p.equip || typeof p.equip !== "object") p.equip = { weapon: null, armor: null };
 };
 
 /* เพิ่มไอเทมเข้ากระเป๋า */

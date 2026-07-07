@@ -111,7 +111,7 @@ GameData.enemies = {
   slime:  { id: "slime",  name: "สไลม์",       sprite: "🟢", hp: 22,  atk: 6,  def: 2,  exp: 8,   gold: 6,  drop: { item: "slime_gel", rate: 0.6 } },
   bat:    { id: "bat",    name: "ค้างคาว",     sprite: "🦇", hp: 18,  atk: 8,  def: 1,  exp: 10,  gold: 8,  drop: null, drop2: { item: "pet_berry", rate: 0.25 } },
   wolf:   { id: "wolf",   name: "หมาป่า",       sprite: "🐺", hp: 35,  atk: 12, def: 4,  exp: 18,  gold: 14, drop: { item: "wolf_fang", rate: 0.5 }, drop2: { item: "pet_meat", rate: 0.3 } },
-  goblin: { id: "goblin", name: "ก็อบลิน",     sprite: "👺", hp: 48,  atk: 15, def: 6,  exp: 26,  gold: 22, drop: { item: "potion", rate: 0.3 } },
+  goblin: { id: "goblin", name: "ก็อบลินจอมโจร", sprite: "👺", hp: 110, atk: 26, def: 13, exp: 55, gold: 60, drop: { item: "hi_potion", rate: 0.4 }, drop2: { item: "iron_sword", rate: 0.1 } },
   golem:  { id: "golem",  name: "โกเลมหิน",     sprite: "🗿", hp: 90,  atk: 20, def: 14, exp: 55,  gold: 60, drop: { item: "iron_armor", rate: 0.15 } },
   drake:  { id: "drake",  name: "เดรกไฟ",       sprite: "🐉", hp: 160, atk: 30, def: 12, exp: 120, gold: 150, boss: true, drop: { item: "mythril_bow", rate: 1.0 } },
 
@@ -218,7 +218,7 @@ GameData.maps = {
     encounters: [
       { enemy: "slime", weight: 5 },
       { enemy: "bat", weight: 3 },
-      { enemy: "goblin", weight: 1 },
+      { enemy: "wolf", weight: 2 },
     ],
     grid: parseMap([
       "1111111100111111",
@@ -255,7 +255,6 @@ GameData.maps = {
     encounters: [
       { enemy: "dire_wolf", weight: 4 },
       { enemy: "treant", weight: 3 },
-      { enemy: "goblin", weight: 2 },
     ],
     grid: parseMap([
       "1111111001111111",
@@ -293,7 +292,6 @@ GameData.maps = {
     encounters: [
       { enemy: "fire_imp", weight: 4 },
       { enemy: "magma_golem", weight: 2 },
-      { enemy: "goblin", weight: 1 },
     ],
     grid: parseMap([
       "6666666666666666",
