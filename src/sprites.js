@@ -51,10 +51,10 @@ Sprites.drawHero = function (ctx, cls, dir, dx, dy, size, moving) {
   const frame = moving ? Sprites.walkFrame(H.walk) : Sprites.idleFrame(H.idle);
   const c = H.cell;
   ctx.imageSmoothingEnabled = false;
-  // ฮีโร่สูงกว่า tile เล็กน้อย จัดให้เท้าอยู่ล่างของช่อง
-  const drawSize = size * 1.5;
+  // ฮีโร่ chibi: สูงกว่า tile นิดเดียว (มินิ) จัดให้เท้าอยู่ล่างของช่อง
+  const drawSize = size * 1.3;
   const ox = dx + (size - drawSize) / 2;
-  const oy = dy + size - drawSize + size * 0.18;
+  const oy = dy + size - drawSize + size * 0.12;
   ctx.drawImage(Sprites.img.heroes, frame * c, row * c, c, c, ox, oy, drawSize, drawSize);
   return true;   // คืน true เพื่อให้ผู้เรียกรู้ว่าวาด sprite สำเร็จ (ไม่ต้อง fallback emoji)
 };
@@ -106,9 +106,9 @@ Sprites.drawNpc = function (ctx, npcId, dx, dy, size) {
   const frame = Sprites.idleFrame(N.idle);
   const c = N.cell;
   ctx.imageSmoothingEnabled = false;
-  const drawSize = size * 1.5;
+  const drawSize = size * 1.3;
   const ox = dx + (size - drawSize) / 2;
-  const oy = dy + size - drawSize + size * 0.18;
+  const oy = dy + size - drawSize + size * 0.12;
   ctx.drawImage(Sprites.img.npcs, frame * c, row * c, c, c, ox, oy, drawSize, drawSize);
   return true;
 };

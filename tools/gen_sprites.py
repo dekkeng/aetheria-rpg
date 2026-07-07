@@ -69,109 +69,105 @@ PAL = {
 S = 48  # ขนาดเซลล์ฮีโร่
 DIRS = ["down", "up", "left", "right"]
 
+# ---- โครงร่าง chibi ที่ทุกอาชีพใช้ร่วมกัน (เพื่อให้ overlay อาวุธ/เกราะ ตรงตำแหน่ง) ----
+CX = 24
+def hero_anim(frame):
+    bob  = [0, -1, 0, -1][frame]        # ตัวขยับขึ้นลง (หายใจ)
+    legA = [0, 0, -2, 2][frame]         # ก้าวขาซ้าย
+    legB = [0, 0, 2, -2][frame]         # ก้าวขาขวา
+    arm  = [0, 0, 1, -1][frame]         # แกว่งแขน
+    return bob, legA, legB, arm
+
+def hero_body_rect(frame):
+    """คืน (x0,y0,x1,y1) ของลำตัว chibi ในเฟรมนั้น — ใช้ให้ overlay เกราะแนบพอดี"""
+    bob = hero_anim(frame)[0]
+    return (CX-7, 27+bob, CX+7, 40+bob)
+
 def draw_hero(cls, direction, frame):
-    """วาดฮีโร่ 1 เฟรม; left ได้จากการ flip ของ right"""
+    """ฮีโร่ chibi: หัวโต ตัวเตี้ย ขาสั้น — ไม่ถืออาวุธ (อาวุธมาเป็น overlay ตอนสวม)"""
     flip = (direction == "left")
-    d_use = "right" if flip else direction
-    img = new_cell(S, S)
-    d = ImageDraw.Draw(img)
+    dr = "right" if flip else direction
+    img = new_cell(S, S); d = ImageDraw.Draw(img)
     p = PAL[cls]
+    bob, legA, legB, arm = hero_anim(frame)
+    cx = CX
+    boot = (58, 46, 40, 255)
 
-    # จังหวะ animation: bob (หายใจ) + ขา
-    bob = [0, -1, 0, -1][frame]         # ตัวขยับขึ้นลงเล็กน้อย
-    legA = [0, 0, -2, 2][frame]         # ขาซ้าย
-    legB = [0, 0, 2, -2][frame]         # ขาขวา
-    armsw = [0, 0, 2, -2][frame]
+    shadow(d, cx, 45, 10, 3, 95)
 
-    cx = 24
-    top = 9 + bob
+    # ---- ขาสั้น + รองเท้า ----
+    rect(d, cx-5, 38+bob, cx-1, 43+bob+legA, p["main_s"])
+    rect(d, cx+1, 38+bob, cx+5, 43+bob+legB, p["main_s"])
+    rect(d, cx-6, 42+bob+legA, cx-1, 45+bob+legA, boot)
+    rect(d, cx+1, 42+bob+legB, cx+6, 45+bob+legB, boot)
 
-    # เงาใต้เท้า
-    shadow(d, cx, 44, 11, 3, 90)
+    by0, by1 = 27+bob, 40+bob
+    # ---- เสื้อคลุมหลัง (นักรบ) ----
+    if cls == "warrior" and dr != "up":
+        d.polygon([(cx-7, by0+1), (cx-10, by1+3), (cx+10, by1+3), (cx+7, by0+1)], fill=p["acc_s"])
+    # ---- แขน (หลังลำตัว) ----
+    rect(d, cx-9, by0+2+arm, cx-6, by0+9+arm, p["main_s"])
+    rect(d, cx+6, by0+2-arm, cx+9, by0+9-arm, p["main_s"])
+    rect(d, cx-9, by0+8+arm, cx-6, by0+11+arm, SKIN)   # มือ
+    rect(d, cx+6, by0+8-arm, cx+9, by0+11-arm, SKIN)
 
-    # ---- ขา ----
-    rect(d, cx-5, 33+bob, cx-1, 42+legA, p["main_s"])
-    rect(d, cx+1, 33+bob, cx+5, 42+legB, p["main_s"])
-    # รองเท้า
-    rect(d, cx-6, 41+legA, cx-1, 43+legA, (50,40,35,255))
-    rect(d, cx+1, 41+legB, cx+6, 43+legB, (50,40,35,255))
-
-    # ---- ลำตัว/เสื้อคลุม ----
+    # ---- ลำตัว (เสื้อ) ----
+    if cls == "mage":                                   # ชายเสื้อบานล่าง
+        d.polygon([(cx-7, by1-4), (cx-9, by1+2), (cx+9, by1+2), (cx+7, by1-4)], fill=p["main"])
+        rect(d, cx-9, by1, cx+9, by1+2, p["main_s"])
+    rect(d, cx-7, by0, cx+7, by1, p["main"])
+    rect(d, cx-7, by0, cx+7, by0+3, p["main_h"])        # ไฮไลต์ไหล่
+    rect(d, cx-7, by1-3, cx+7, by1, p["main_s"])        # เงาชายเสื้อ
+    rect(d, cx-3, by0-1, cx+3, by0+2, p["main_h"])      # คอเสื้อ
+    # รายละเอียดต่ออาชีพ
     if cls == "warrior":
-        # เสื้อคลุมแดงด้านหลัง
-        if d_use != "up":
-            rect(d, cx-7, top+7, cx+7, 36+bob, p["acc_s"])
-        rect(d, cx-8, top+6, cx-6, 34+bob, p["acc"])   # ชายคลุม
-        rect(d, cx+6, top+6, cx+8, 34+bob, p["acc"])
-    # เกราะ/เสื้อ
-    rect(d, cx-6, top+6, cx+6, 34+bob, p["main"])
-    rect(d, cx-6, top+6, cx+6, top+10, p["main_h"])    # ไฮไลต์บน
-    rect(d, cx-6, 30+bob, cx+6, 34+bob, p["main_s"])   # เงาล่าง
-    if cls == "mage":
-        # ชุดคลุมยาวบานล่าง
-        rect(d, cx-8, 28+bob, cx+8, 40+bob, p["main"])
-        rect(d, cx-8, 36+bob, cx+8, 40+bob, p["main_s"])
-        rect(d, cx-2, 16+bob, cx+2, 38+bob, p["main_h"])  # แถบกลาง
-    if cls == "archer":
-        rect(d, cx-3, top+8, cx+3, 30+bob, p["acc"])      # สายสะพาย
-        rect(d, cx-6, top+7, cx+6, top+9, p["main_h"])
-
-    # ---- แขน ----
-    rect(d, cx-9, top+8+armsw, cx-6, 28+bob+armsw, p["main_s"])
-    rect(d, cx+6, top+8-armsw, cx+9, 28+bob-armsw, p["main_s"])
-    # มือ
-    rect(d, cx-9, 26+bob+armsw, cx-6, 29+bob+armsw, SKIN)
-    rect(d, cx+6, 26+bob-armsw, cx+9, 29+bob-armsw, SKIN)
-
-    # ---- หัว ----
-    hx0, hy0, hx1, hy1 = cx-6, top-2, cx+6, top+8
-    ellipse(d, hx0, hy0, hx1, hy1, SKIN)
-    rect(d, hx0+1, hy1-3, hx1-1, hy1, SKIN_S)  # เงาคาง
-
-    # ผม/หมวก
-    if cls == "mage":
-        # หมวกจอมเวทแหลม
-        d.polygon([(cx, top-12), (cx-8, top+2), (cx+8, top+2)], fill=p["main"])
-        d.polygon([(cx, top-12), (cx, top+2), (cx+8, top+2)], fill=p["main_s"])
-        rect(d, cx-8, top+1, cx+8, top+3, p["main_h"])
-        ellipse(d, cx-2, top-14, cx+2, top-10, p["acc"])  # ปอมปอม
+        rect(d, cx-7, by1-6, cx+7, by1-4, p["acc"])     # สายคาดแดง
+        rect(d, cx-1, by1-6, cx+1, by1-4, p["metal"])   # หัวเข็มขัด
+        d.line([(cx, by0+2), (cx, by1-6)], fill=p["main_s"], width=1)
     elif cls == "archer":
-        # ฮู้ด
-        d.pieslice([hx0-2, hy0-3, hx1+2, hy1+2], 180, 360, fill=p["main"])
-        rect(d, hx0-2, top+1, hx1+2, top+4, p["main_s"])
-    else:
-        # ผม + หมวกเหล็กนักรบ
-        d.pieslice([hx0-1, hy0-2, hx1+1, hy1], 180, 360, fill=p["hair"])
-        d.pieslice([hx0-1, hy0-3, hx1+1, hy1-4], 180, 360, fill=p["metal"])
-        rect(d, hx0-1, top-3, hx1+1, top-1, p["metal_s"])
-
-    # หน้า (เฉพาะ down/right)
-    if d_use == "down":
-        rect(d, cx-4, top+2, cx-2, top+4, (40,35,45,255))
-        rect(d, cx+2, top+2, cx+4, top+4, (40,35,45,255))
-        rect(d, cx-2, top+6, cx+2, top+6, SKIN_S)
-    elif d_use == "right":
-        rect(d, cx+2, top+2, cx+4, top+4, (40,35,45,255))
-
-    # ---- อาวุธ ----
-    if cls == "warrior":
-        # ดาบด้านขวา
-        wx = cx+8
-        rect(d, wx, 12+bob, wx+2, 30+bob, p["metal"])          # ใบดาบ
-        rect(d, wx, 12+bob, wx+1, 30+bob, p["metal_s"])
-        rect(d, wx-2, 29+bob, wx+4, 31+bob, (120,90,50,255))   # การ์ด
-        rect(d, wx, 31+bob, wx+2, 35+bob, (90,65,40,255))      # ด้าม
+        d.line([(cx-6, by0+1), (cx+5, by1-2)], fill=p["acc"], width=2)   # สายสะพายธนู
+        rect(d, cx-7, by1-6, cx+7, by1-5, p["acc_s"])   # เข็มขัด
     elif cls == "mage":
-        # ไม้เท้า
-        sx = cx+9
-        rect(d, sx, 10+bob, sx+2, 34+bob, p["metal"])
-        ellipse(d, sx-2, 5+bob, sx+4, 11+bob, p["gem"])
-        ellipse(d, sx-1, 6+bob, sx+2, 9+bob, (220,255,255,255))
-    elif cls == "archer":
-        # คันธนูด้านซ้าย
-        bx = cx-11
-        d.arc([bx, 8+bob, bx+10, 34+bob], 300, 60, fill=p["metal"], width=2)
-        d.line([(bx+9, 10+bob), (bx+9, 32+bob)], fill=p["string"], width=1)
+        rect(d, cx-1, by0, cx+1, by1, p["main_h"])      # แถบกลางชุด
+        rect(d, cx-7, by1-6, cx+7, by1-5, p["acc"])     # ผ้าคาดทอง
+
+    # ---- หัวโต ----
+    hr = 10; hcy = 16 + bob
+    ellipse(d, cx-hr, hcy-hr, cx+hr, hcy+hr, SKIN)
+    rect(d, cx-hr+2, hcy+hr-4, cx+hr-2, hcy+hr, SKIN_S)     # เงาคาง
+    ear = SKIN_S
+    if dr in ("down", "up"):
+        rect(d, cx-hr, hcy-1, cx-hr+1, hcy+2, ear); rect(d, cx+hr-1, hcy-1, cx+hr, hcy+2, ear)
+
+    # ผม/หมวกต่ออาชีพ
+    if cls == "warrior":
+        d.pieslice([cx-hr, hcy-hr-1, cx+hr, hcy+3], 180, 360, fill=p["hair"])       # ผม
+        d.pieslice([cx-hr-1, hcy-hr-2, cx+hr+1, hcy], 180, 360, fill=p["metal"])    # หมวกเหล็ก
+        rect(d, cx-hr-1, hcy-3, cx+hr+1, hcy-1, p["metal_s"])                        # ขอบหมวก
+        rect(d, cx-1, hcy-hr-3, cx+1, hcy-hr, p["acc"])                              # ยอดขนแดง
+    elif cls == "mage":
+        d.pieslice([cx-hr, hcy-hr, cx+hr, hcy+2], 180, 360, fill=p["hair"])
+        d.polygon([(cx, hcy-hr-11), (cx-hr-1, hcy-2), (cx+hr+1, hcy-2)], fill=p["main"])   # หมวกแหลม
+        d.polygon([(cx, hcy-hr-11), (cx, hcy-2), (cx+hr+1, hcy-2)], fill=p["main_s"])
+        rect(d, cx-hr-1, hcy-3, cx+hr+1, hcy-1, p["main_h"])
+        ellipse(d, cx-2, hcy-hr-13, cx+2, hcy-hr-9, p["acc"])                        # ปอมปอม
+    else:  # archer — ฮู้ด
+        d.pieslice([cx-hr-2, hcy-hr-2, cx+hr+2, hcy+3], 180, 360, fill=p["main"])
+        d.pieslice([cx-hr, hcy-hr, cx+hr, hcy+1], 180, 360, fill=p["hair"])          # ผมลอด
+        rect(d, cx-hr-2, hcy-2, cx+hr+2, hcy+1, p["main_s"])
+
+    # หน้า
+    eye = (48, 40, 54, 255); shine = (255, 255, 255, 255)
+    if dr == "down":
+        rect(d, cx-4, hcy, cx-2, hcy+3, eye);  rect(d, cx-4, hcy, cx-3, hcy+1, shine)
+        rect(d, cx+2, hcy, cx+4, hcy+3, eye);  rect(d, cx+2, hcy, cx+3, hcy+1, shine)
+        rect(d, cx-5, hcy+3, cx-3, hcy+4, (232,150,150,150))   # แก้ม
+        rect(d, cx+3, hcy+3, cx+5, hcy+4, (232,150,150,150))
+        rect(d, cx-1, hcy+5, cx+1, hcy+6, (170,90,90,255))     # ปาก
+    elif dr == "right":
+        rect(d, cx+2, hcy, cx+4, hcy+3, eye); rect(d, cx+2, hcy, cx+3, hcy+1, shine)
+        rect(d, cx+4, hcy+3, cx+6, hcy+4, (232,150,150,140))
+        rect(d, cx+3, hcy+5, cx+5, hcy+6, (170,90,90,255))
 
     add_outline(img)
     if flip:
@@ -443,104 +439,112 @@ def shade(c, f):
     return (min(255, int(c[0]*f)), min(255, int(c[1]*f)), min(255, int(c[2]*f)), c[3] if len(c) > 3 else 255)
 
 def draw_npc(spec, frame):
-    """วาด NPC 1 ตัว (idle 2 เฟรม) — humanoid ปรับแต่งตาม spec"""
+    """NPC chibi (idle 2 เฟรม) — โครงเดียวกับฮีโร่ ปรับแต่งตาม spec"""
     img = new_cell(S, S); d = ImageDraw.Draw(img)
     body = spec["body"]; bs = spec.get("body_s", shade(body, .68)); bh = spec.get("body_h", shade(body, 1.25))
     sc = spec.get("skin", SKIN); scs = spec.get("skin_s", SKIN_S)
     bob = [0, -1][frame]
-    cx = 24; top = 10 + bob
-    yoff = spec.get("yoff", 0)          # ตัวเตี้ย (เด็ก/คนแคระ) ดันลงล่าง
-    top += yoff
+    cx = CX
+    yo = spec.get("yoff", 0)               # ตัวเตี้ย (เด็ก/คนแคระ)
+    hr = 9 if yo else 10
+    hcy = 16 + bob + yo                     # จุดกลางหัว
+    by0, by1 = 28 + bob + yo, 41 + bob      # ลำตัว
+    boot = (58, 46, 40, 255)
 
-    shadow(d, cx, 44, 11, 3, 90)
-    # backpack (วาดก่อนตัว)
+    shadow(d, cx, 45, 10, 3, 92)
+    # เป้สะพายหลัง (วาดก่อนตัว)
     if spec.get("acc") == "pack":
-        rect(d, cx-9, top+8, cx+9, 32+bob, (110,78,44,255))
-        rect(d, cx-9, top+8, cx+9, top+11, (140,100,60,255))
-    # ขา
-    rect(d, cx-5, 32+bob, cx-1, 42, bs); rect(d, cx+1, 32+bob, cx+5, 42, bs)
-    rect(d, cx-6, 41, cx-1, 43, (50,40,35,255)); rect(d, cx+1, 41, cx+6, 43, (50,40,35,255))
-    # cape (วีรอน)
+        rect(d, cx-9, by0+1, cx+9, by1-1, (110,78,44,255))
+        rect(d, cx-9, by0+1, cx+9, by0+4, (140,100,60,255))
+    # ขาสั้น + รองเท้า
+    rect(d, cx-5, 38+bob, cx-1, 44+bob, bs); rect(d, cx+1, 38+bob, cx+5, 44+bob, bs)
+    rect(d, cx-6, 43+bob, cx-1, 45+bob, boot); rect(d, cx+1, 43+bob, cx+6, 45+bob, boot)
+    # เสื้อคลุม (วีรอน)
     if spec.get("cape"):
-        cc = spec["cape"]
-        d.polygon([(cx-8,top+6),(cx-12,40),(cx,36),(cx+12,40),(cx+8,top+6)], fill=cc)
-    # ลำตัว/เสื้อคลุม
-    rect(d, cx-7, top+6, cx+7, 34, body)
-    if spec.get("robe"):                # เสื้อคลุมยาวบานล่าง
-        rect(d, cx-8, 28, cx+8, 40, body); rect(d, cx-8, 36, cx+8, 40, bs)
-    rect(d, cx-7, top+6, cx+7, top+10, bh)
-    rect(d, cx-7, 30, cx+7, 34, bs)
-    if spec.get("belt"):
-        rect(d, cx-7, 24, cx+7, 26, spec["belt"])
+        d.polygon([(cx-7,by0),(cx-10,by1+3),(cx,by1),(cx+10,by1+3),(cx+7,by0)], fill=spec["cape"])
     # แขน + มือ
-    rect(d, cx-9, top+8, cx-6, 28, bs); rect(d, cx+6, top+8, cx+9, 28, bs)
-    rect(d, cx-9, 26, cx-6, 29, sc); rect(d, cx+6, 26, cx+9, 29, sc)
-    # หัว
-    hx0, hy0, hx1, hy1 = cx-6, top-2, cx+6, top+8
+    rect(d, cx-9, by0+2, cx-6, by0+9, bs); rect(d, cx+6, by0+2, cx+9, by0+9, bs)
+    rect(d, cx-9, by0+8, cx-6, by0+11, sc); rect(d, cx+6, by0+8, cx+9, by0+11, sc)
+    # ลำตัว / เสื้อคลุมยาว
+    if spec.get("robe"):
+        d.polygon([(cx-7,by1-5),(cx-9,by1+2),(cx+9,by1+2),(cx+7,by1-5)], fill=body)
+        rect(d, cx-9, by1, cx+9, by1+2, bs)
+    rect(d, cx-7, by0, cx+7, by1, body)
+    rect(d, cx-7, by0, cx+7, by0+3, bh)
+    rect(d, cx-7, by1-3, cx+7, by1, bs)
+    rect(d, cx-3, by0-1, cx+3, by0+2, bh)         # คอเสื้อ
+    if spec.get("belt"):
+        rect(d, cx-7, by1-6, cx+7, by1-4, spec["belt"])
+
+    # หัวโต
+    hx0, hy0, hx1, hy1 = cx-hr, hcy-hr, cx+hr, hcy+hr
     ellipse(d, hx0, hy0, hx1, hy1, sc)
-    rect(d, hx0+1, hy1-3, hx1-1, hy1, scs)
+    rect(d, hx0+2, hy1-4, hx1-2, hy1, scs)        # เงาคาง
+    rect(d, hx0, hcy-1, hx0+1, hcy+2, scs); rect(d, hx1-1, hcy-1, hx1, hcy+2, scs)  # หู
+
     # ทรงผม/หมวก
     hs = spec.get("head", "hair"); hair = spec.get("hair", (90,60,40,255))
     if hs == "hood":
-        d.pieslice([hx0-2, hy0-3, hx1+2, hy1+2], 180, 360, fill=body)
-        rect(d, hx0-2, top+1, hx1+2, top+4, bs)
+        d.pieslice([hx0-2, hy0-2, hx1+2, hy1+2], 180, 360, fill=body)
+        rect(d, hx0-2, hcy-2, hx1+2, hcy+1, bs)
     elif hs == "hat_point":
-        d.polygon([(cx, top-13),(cx-8, top+2),(cx+8, top+2)], fill=body)
-        d.polygon([(cx, top-13),(cx, top+2),(cx+8, top+2)], fill=bs)
-        rect(d, cx-9, top+1, cx+9, top+3, bh)
+        d.polygon([(cx, hcy-hr-12),(hx0-1, hcy-2),(hx1+1, hcy-2)], fill=body)
+        d.polygon([(cx, hcy-hr-12),(cx, hcy-2),(hx1+1, hcy-2)], fill=bs)
+        rect(d, hx0-1, hcy-3, hx1+1, hcy-1, bh)
     elif hs == "hat_wide":
-        ellipse(d, hx0-4, top-1, hx1+4, top+4, shade(hair,1.0))
-        d.pieslice([hx0, hy0-4, hx1, hy1-2], 180, 360, fill=hair)
+        ellipse(d, hx0-4, hcy-2, hx1+4, hcy+3, shade(hair,1.0))
+        d.pieslice([hx0, hy0-3, hx1, hy1-3], 180, 360, fill=hair)
     elif hs == "helm":
         d.pieslice([hx0-1, hy0-2, hx1+1, hy1], 180, 360, fill=(150,158,170,255))
-        rect(d, hx0-1, top-1, hx1+1, top+2, (120,128,140,255))
-        rect(d, cx-1, top-4, cx+1, top+2, (120,128,140,255))   # สันหมวก
+        rect(d, hx0-1, hcy-3, hx1+1, hcy-1, (120,128,140,255))
+        rect(d, cx-1, hcy-hr-2, cx+1, hcy-1, (120,128,140,255))   # สันหมวก
         if spec.get("plume"):
-            rect(d, cx-1, top-9, cx+1, top-3, spec["plume"])
+            rect(d, cx-1, hcy-hr-6, cx+1, hcy-hr-1, spec["plume"])
     elif hs == "cap":
-        d.pieslice([hx0, hy0-2, hx1, hy1-3], 180, 360, fill=hair)
-        rect(d, hx0, top+1, hx1+3, top+3, shade(hair,1.15))
+        d.pieslice([hx0, hy0-1, hx1, hy1-3], 180, 360, fill=hair)
+        rect(d, hx0, hcy-2, hx1+3, hcy, shade(hair,1.15))         # ปีกหมวก
     elif hs == "crown":
         d.pieslice([hx0-1, hy0-2, hx1+1, hy1], 180, 360, fill=(46,42,58,255))
         for i in range(5):
-            d.polygon([(cx-6+i*3, top-4),(cx-5+i*3, top-9),(cx-4+i*3, top-4)], fill=(240,210,90,255))
-        rect(d, cx-6, top-4, cx+6, top-2, (240,210,90,255))
+            d.polygon([(cx-6+i*3, hcy-hr),(cx-5+i*3, hcy-hr-5),(cx-4+i*3, hcy-hr)], fill=(240,210,90,255))
+        rect(d, cx-6, hcy-hr, cx+6, hcy-hr+2, (240,210,90,255))
     else:  # hair
-        d.pieslice([hx0-1, hy0-2, hx1+1, hy1], 180, 360, fill=hair)
+        d.pieslice([hx0-1, hy0-1, hx1+1, hy1], 180, 360, fill=hair)
+
     # เครา
     if spec.get("beard"):
-        bc = spec["beard"]; blen = spec.get("beard_len", 6)
-        d.polygon([(cx-5, top+4),(cx+5, top+4),(cx+4, top+4+blen),(cx-4, top+4+blen)], fill=bc)
-        rect(d, cx-5, top+3, cx+5, top+5, bc)
+        bc = spec["beard"]; blen = min(spec.get("beard_len", 6), 7)
+        d.polygon([(cx-5, hcy+2),(cx+5, hcy+2),(cx+4, hcy+2+blen),(cx-4, hcy+2+blen)], fill=bc)
+        rect(d, cx-5, hcy+1, cx+5, hcy+3, bc)
     # ตา
-    eyes = spec.get("eyes", (40,35,45,255))
+    eyes = spec.get("eyes", (44,38,52,255))
     if eyes == "blind":
-        rect(d, cx-5, top+2, cx+5, top+4, (220,220,230,255))   # ผ้าปิดตา
+        rect(d, cx-5, hcy, cx+5, hcy+2, (220,220,230,255))       # ผ้าปิดตา
     else:
-        rect(d, cx-4, top+2, cx-2, top+4, eyes)
-        rect(d, cx+2, top+2, cx+4, top+4, eyes)
-    # อุปกรณ์ประจำตัว
+        rect(d, cx-4, hcy, cx-2, hcy+2, eyes); rect(d, cx-4, hcy, cx-3, hcy+1, (255,255,255,255))
+        rect(d, cx+2, hcy, cx+4, hcy+2, eyes); rect(d, cx+2, hcy, cx+3, hcy+1, (255,255,255,255))
+
+    # อุปกรณ์ประจำตัว (มือขวา)
     acc = spec.get("acc")
     if acc == "staff":
-        rect(d, cx+9, 8, cx+11, 34, (140,95,55,255))
+        rect(d, cx+9, hcy-4, cx+11, by1, (140,95,55,255))
         oc = spec.get("orb", (95,225,255,255))
-        ellipse(d, cx+7, 4, cx+13, 10, oc); ellipse(d, cx+8, 5, cx+11, 8, (230,255,255,255))
+        ellipse(d, cx+7, hcy-9, cx+13, hcy-3, oc); ellipse(d, cx+8, hcy-8, cx+11, hcy-5, (230,255,255,255))
     elif acc == "sword":
-        rect(d, cx+9, 12, cx+11, 30, (205,212,222,255))
-        rect(d, cx+7, 29, cx+13, 31, (120,90,50,255)); rect(d, cx+9, 31, cx+11, 35, (90,65,40,255))
+        rect(d, cx+9, hcy, cx+11, by1-2, (205,212,222,255))
+        rect(d, cx+7, by1-3, cx+13, by1-1, (120,90,50,255)); rect(d, cx+9, by1-1, cx+11, by1+3, (90,65,40,255))
     elif acc == "bow":
-        d.arc([cx-13, 8, cx-3, 34], 300, 60, fill=(150,110,60,255), width=2)
-        d.line([(cx-4, 10),(cx-4, 32)], fill=(230,230,210,255), width=1)
+        d.arc([cx-13, hcy-4, cx-3, by1], 300, 60, fill=(150,110,60,255), width=2)
+        d.line([(cx-4, hcy-2),(cx-4, by1-2)], fill=(230,230,210,255), width=1)
     elif acc == "hammer":
-        rect(d, cx+9, 14, cx+11, 34, (110,80,50,255))         # ด้าม
-        rect(d, cx+6, 10, cx+14, 16, (120,128,140,255))       # หัวค้อน
-        rect(d, cx+6, 10, cx+14, 12, (170,178,190,255))
+        rect(d, cx+9, hcy+2, cx+11, by1, (110,80,50,255))
+        rect(d, cx+6, hcy-2, cx+14, hcy+4, (120,128,140,255)); rect(d, cx+6, hcy-2, cx+14, hcy, (170,178,190,255))
     elif acc == "crystal":
-        d.polygon([(cx+10,6),(cx+7,12),(cx+10,18),(cx+13,12)], fill=(150,240,255,220))
-        d.polygon([(cx+10,6),(cx+10,18),(cx+13,12)], fill=(90,180,220,220))
+        d.polygon([(cx+10,hcy-6),(cx+7,hcy),(cx+10,hcy+6),(cx+13,hcy)], fill=(150,240,255,220))
+        d.polygon([(cx+10,hcy-6),(cx+10,hcy+6),(cx+13,hcy)], fill=(90,180,220,220))
     elif acc == "dagger":
-        d.line([(cx-9,20),(cx-13,12)], fill=(210,220,235,255), width=2)
-        d.line([(cx+9,20),(cx+13,28)], fill=(210,220,235,255), width=2)
+        d.line([(cx-9,by0+6),(cx-13,by0-2)], fill=(210,220,235,255), width=2)
+        d.line([(cx+9,by0+6),(cx+13,by0+12)], fill=(210,220,235,255), width=2)
     add_outline(img)
     return img
 
