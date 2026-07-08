@@ -99,16 +99,19 @@
     <!-- Overworld -->
     <section id="screen-world" class="screen">
       <div class="world-stage" id="world-stage">
-        <canvas id="map-canvas"></canvas>
         <div class="stage-vignette"></div>
       </div>
 
       <div class="world-ui">
         <div class="hud-zone">
+          <!-- Minimap สไตล์ MMO (ซ้ายบน) -->
+          <div class="minimap-frame">
+            <canvas id="minimap-canvas" width="132" height="132"></canvas>
+            <div id="map-name" class="map-name">-</div>
+          </div>
           <div class="hud">
-            <div class="hud-portrait" id="hud-portrait">
-              <span class="lv-badge">Lv<b id="hud-level">1</b></span>
-            </div>
+            <div class="hud-portrait" id="hud-portrait"></div>
+            <span class="lv-badge">Lv<b id="hud-level">1</b></span>
             <div class="hud-main">
               <div class="hud-top">
                 <span id="hud-name">-</span>
@@ -121,7 +124,6 @@
             </div>
           </div>
           <div class="chapter-tab" id="chapter-tab"></div>
-          <div id="map-name" class="map-name">-</div>
         </div>
 
         <div class="controls">
@@ -211,12 +213,16 @@
     </div>
   </div>
 
+  <script src="assets/vendor/phaser.min.js"></script>
   <script src="assets/sprites/manifest.js"></script>
+  <script src="assets/sprites/flare/flare-manifest.js"></script>
   <script src="src/data.js"></script>
   <script src="src/state.js"></script>
   <script src="src/sfx.js"></script>
   <script src="src/music.js"></script>
   <script src="src/sprites.js"></script>
+  <script src="src/iso.js"></script>
+  <script src="src/minimap.js"></script>
   <script src="src/story.js"></script>
   <script src="src/pets.js"></script>
   <script src="src/minigames.js"></script>

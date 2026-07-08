@@ -49,17 +49,9 @@ UI.updateHud = function () {
   const clsEl = UI.$("#hud-class");
   if (clsEl && cls) clsEl.textContent = cls.name;
   const port = UI.$("#hud-portrait");
-  if (port && typeof Sprites !== "undefined" && Sprites.ready && Sprites.man.heroes) {
-    const H = Sprites.man.heroes;
-    const row = H.rows[p.classId + "_down"];
-    if (row !== undefined) {
-      const px = 66, scale = px / H.cell;
-      port.style.backgroundImage = "url('assets/sprites/heroes.png')";
-      port.style.backgroundRepeat = "no-repeat";
-      port.style.backgroundSize = `${H.frames * H.cell * scale}px ${Object.keys(H.rows).length * H.cell * scale}px`;
-      port.style.backgroundPosition = `-6px ${-row * H.cell * scale - 6}px`;
-      port.style.imageRendering = "pixelated";
-    }
+  if (port && typeof Sprites !== "undefined" && Sprites.ready) {
+    const style = Sprites.heroPortraitStyle(p.classId, 54);
+    if (style) port.setAttribute("style", style);
   }
 
   const need = GameData.expForLevel(p.level);
