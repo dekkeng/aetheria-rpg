@@ -85,9 +85,12 @@ Iso.init = function () {
     }
   }
 
+  // Renderer: ใช้ Canvas2D เป็นหลัก — art เป็นภาพ pre-rendered ไม่ต้องใช้ shader
+  // และเลี่ยงปัญหา WebGL ใน webview/แท็บพื้นหลัง (?rnd=webgl ไว้ทดลอง)
+  const rnd = new URLSearchParams(location.search).get("rnd");
+  const rtype = rnd === "webgl" ? Phaser.WEBGL : Phaser.CANVAS;
   Iso.game = new Phaser.Game({
-    // แท็บ hidden (ตัวทดสอบ): ใช้ Canvas2D เพื่อให้อ่านภาพ/ทำงานได้เสถียร
-    type: document.hidden ? Phaser.CANVAS : Phaser.AUTO,
+    type: rtype,
     parent: "world-stage",
     scale: { mode: Phaser.Scale.RESIZE, width: "100%", height: "100%" },
     transparent: true,               // ให้เห็นพื้นหลังโทนโซน (Art.applyZoneMood)
