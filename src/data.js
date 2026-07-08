@@ -206,6 +206,8 @@ function _rng(a) {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
+/* ตัวสร้างแผนที่: ฉากแบบกลุ่มก้อนออร์แกนิก (ป่า/บ่อน้ำ/หิน) + พื้นแต่งเบา ๆ
+ * โครงสร้างจงใจ (อาคาร/เสา) วางเป็น rects · การันตีเดินถึงด้วยการ carve เส้นทาง */
 function buildMap(spec) {
   const W = spec.W, H = spec.H, base = spec.base, border = spec.border;
   const g = [];
@@ -215,21 +217,32 @@ function buildMap(spec) {
     g.push(r);
   }
   const setb = (x, y, t) => { if (x >= 0 && y >= 0 && x < W && y < H) g[y][x] = t; };
-  // สิ่งปลูกสร้าง/แหล่งน้ำ เป็นบล็อกสี่เหลี่ยม
-  (spec.rects || []).forEach(([x0, y0, x1, y1, t]) => {
-    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) setb(x, y, t);
-  });
-  // ฉากสุ่ม (seeded) — เว้นช่อง anchor
   const keep = new Set((spec.clear || []).map((c) => c[0] + "," + c[1]));
   const rnd = _rng(spec.seed || 1);
-  for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) {
-    if (keep.has(x + "," + y)) continue;
-    const r = rnd(); let acc = 0;
-    for (const s of (spec.scenery || [])) { acc += s[1]; if (r < acc) { setb(x, y, s[0]); break; } }
-  }
-  // บังคับช่อง anchor ให้เดินได้เสมอ
+  // โครงสร้างจงใจ (อาคาร/น้ำพุ/เสา)
+  (spec.rects || []).forEach(([x0, y0, x1, y1, t]) => {
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (!keep.has(x + "," + y)) setb(x, y, t);
+  });
+  // กลุ่มก้อนออร์แกนิก (ต้นไม้เป็นดง, บ่อน้ำ, หย่อมหิน/ลาวา/น้ำแข็ง)
+  (spec.clusters || []).forEach((cl) => {
+    for (let b = 0; b < cl.blobs; b++) {
+      const bx = 2 + Math.floor(rnd() * (W - 4)), by = 2 + Math.floor(rnd() * (H - 4)), rad = cl.radius;
+      for (let dy = -rad; dy <= rad; dy++) for (let dx = -rad; dx <= rad; dx++) {
+        const x = bx + dx, y = by + dy;
+        if (x < 1 || y < 1 || x >= W - 1 || y >= H - 1 || keep.has(x + "," + y)) continue;
+        if (Math.hypot(dx, dy) <= rad - rnd() * 1.3) setb(x, y, cl.tile);
+      }
+    }
+  });
+  // แต่งพื้นเดินได้เบา ๆ (หย่อมหญ้า/ดอกไม้) เฉพาะช่องที่ยังเป็นพื้นฐาน
+  (spec.ground || []).forEach(([t, dens]) => {
+    for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) {
+      if (keep.has(x + "," + y) || g[y][x] !== base) continue;
+      if (rnd() < dens) setb(x, y, t);
+    }
+  });
+  // บังคับ anchor เดินได้ + carve เส้นทางจาก spawn (การันตีเดินถึง)
   (spec.clear || []).forEach(([x, y]) => setb(x, y, base));
-  // carve เส้นทาง L จาก spawn ไปทุกจุดเชื่อม (การันตีเดินถึง)
   const carve = (x0, y0, x1, y1) => {
     let x = x0, y = y0;
     while (x !== x1) { setb(x, y, base); x += x1 > x ? 1 : -1; }
@@ -247,10 +260,11 @@ GameData.maps = {
     grid: buildMap({
       W: 32, H: 24, base: 3, border: 6, seed: 11,
       rects: [
-        [4, 4, 9, 8, 6], [22, 4, 27, 8, 6], [4, 15, 9, 19, 6], [22, 15, 27, 19, 6],
-        [13, 13, 18, 17, 2], [14, 14, 17, 16, 2],
+        [3, 3, 8, 7, 6], [24, 3, 29, 7, 6], [3, 16, 8, 20, 6], [24, 16, 29, 20, 6],
+        [15, 10, 17, 12, 2],
       ],
-      scenery: [[0, 0.09], [1, 0.05]],
+      clusters: [{ tile: 1, blobs: 7, radius: 1 }],
+      ground: [[0, 0.06]],
       spawn: [16, 20],
       clear: [[16, 20], [16, 22], [16, 21], [11, 6], [21, 6], [21, 17], [11, 17], [16, 10]],
       connect: [[16, 22], [16, 21], [11, 6], [21, 6], [21, 17], [11, 17], [16, 10]],
@@ -270,8 +284,8 @@ GameData.maps = {
     ],
     grid: buildMap({
       W: 32, H: 24, base: 4, border: 1, seed: 22,
-      rects: [[5, 6, 10, 10, 2], [6, 7, 9, 9, 2], [21, 14, 26, 18, 6]],
-      scenery: [[1, 0.10], [0, 0.10], [2, 0.05]],
+      clusters: [{ tile: 1, blobs: 9, radius: 2 }, { tile: 2, blobs: 3, radius: 2 }],
+      ground: [[0, 0.06]],
       spawn: [16, 2],
       clear: [[16, 1], [16, 2], [16, 22], [16, 21], [9, 18], [23, 9]],
       connect: [[16, 1], [16, 22], [16, 21], [9, 18], [23, 9]],
@@ -292,8 +306,8 @@ GameData.maps = {
     encounters: [{ enemy: "dire_wolf", weight: 4 }, { enemy: "treant", weight: 3 }],
     grid: buildMap({
       W: 32, H: 24, base: 4, border: 1, seed: 33,
-      rects: [[7, 8, 11, 12, 1], [20, 6, 24, 10, 1], [12, 15, 19, 18, 2]],
-      scenery: [[1, 0.24], [2, 0.03], [0, 0.05]],
+      clusters: [{ tile: 1, blobs: 16, radius: 2 }, { tile: 2, blobs: 2, radius: 1 }],
+      ground: [[0, 0.05]],
       spawn: [16, 2],
       clear: [[16, 1], [16, 2], [16, 22], [16, 21], [16, 6], [16, 19]],
       connect: [[16, 1], [16, 22], [16, 21], [16, 6], [16, 19]],
@@ -314,8 +328,7 @@ GameData.maps = {
     encounters: [{ enemy: "fire_imp", weight: 4 }, { enemy: "magma_golem", weight: 2 }],
     grid: buildMap({
       W: 32, H: 24, base: 5, border: 6, seed: 44,
-      rects: [[5, 7, 10, 11, 9], [21, 13, 27, 18, 9], [13, 9, 18, 12, 6]],
-      scenery: [[9, 0.09], [6, 0.07]],
+      clusters: [{ tile: 9, blobs: 7, radius: 2 }, { tile: 6, blobs: 5, radius: 1 }],
       spawn: [16, 2],
       clear: [[16, 1], [16, 2], [16, 22], [16, 21], [16, 6], [16, 19]],
       connect: [[16, 1], [16, 22], [16, 21], [16, 6], [16, 19]],
@@ -338,8 +351,8 @@ GameData.maps = {
     ],
     grid: buildMap({
       W: 32, H: 24, base: 4, border: 1, seed: 55,
-      rects: [[5, 6, 11, 11, 2], [20, 13, 27, 19, 2], [13, 8, 18, 11, 2]],
-      scenery: [[2, 0.18], [1, 0.06]],
+      clusters: [{ tile: 2, blobs: 13, radius: 2 }, { tile: 1, blobs: 4, radius: 1 }],
+      ground: [[0, 0.04]],
       spawn: [16, 2],
       clear: [[16, 1], [16, 2], [16, 22], [16, 21], [16, 6], [16, 19]],
       connect: [[16, 1], [16, 22], [16, 21], [16, 6], [16, 19]],
@@ -360,8 +373,7 @@ GameData.maps = {
     encounters: [{ enemy: "frost_wraith", weight: 4 }, { enemy: "ice_golem", weight: 2 }],
     grid: buildMap({
       W: 32, H: 24, base: 7, border: 6, seed: 66,
-      rects: [[6, 7, 11, 11, 8], [20, 7, 25, 11, 8], [12, 14, 19, 18, 8]],
-      scenery: [[8, 0.10], [6, 0.05]],
+      clusters: [{ tile: 8, blobs: 9, radius: 2 }, { tile: 6, blobs: 3, radius: 1 }],
       spawn: [16, 2],
       clear: [[16, 1], [16, 2], [16, 22], [16, 21], [16, 6], [16, 19]],
       connect: [[16, 1], [16, 22], [16, 21], [16, 6], [16, 19]],
@@ -382,8 +394,12 @@ GameData.maps = {
     encounters: [{ enemy: "ashen_knight", weight: 3 }, { enemy: "wraith", weight: 3 }],
     grid: buildMap({
       W: 32, H: 24, base: 5, border: 6, seed: 77,
-      rects: [[6, 6, 10, 10, 6], [21, 6, 25, 10, 6], [6, 14, 10, 18, 6], [21, 14, 25, 18, 6]],
-      scenery: [[6, 0.12], [9, 0.03]],
+      rects: [
+        [6, 6, 7, 7, 6], [11, 6, 12, 7, 6], [19, 6, 20, 7, 6], [24, 6, 25, 7, 6],
+        [6, 11, 7, 12, 6], [24, 11, 25, 12, 6],
+        [6, 16, 7, 17, 6], [11, 16, 12, 17, 6], [19, 16, 20, 17, 6], [24, 16, 25, 17, 6],
+      ],
+      clusters: [{ tile: 9, blobs: 2, radius: 1 }],
       spawn: [16, 2],
       clear: [[16, 1], [16, 2], [16, 18]],
       connect: [[16, 1], [16, 18]],

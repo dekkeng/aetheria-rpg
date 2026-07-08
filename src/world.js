@@ -156,9 +156,9 @@ World.update = function (dt) {
     const trow = map.grid[p.y], tile = trow ? GameData.tiles[trow[p.x]] : null;
     if (tile && tile.encounter && map.encounters && map.encounters.length) {
       World.encDist += spd;
-      if (World.encDist > 3.4) {
+      if (World.encDist > 7.0) {                 // เดินไกลขึ้นก่อนมีสิทธิ์เจอ
         World.encDist = 0;
-        if (Math.random() < 0.55) { World.locked = true; Battle.start(World.rollEncounter(map)); return; }
+        if (Math.random() < 0.4) { World.locked = true; Battle.start(World.rollEncounter(map)); return; }
       }
     }
   }
