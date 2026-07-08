@@ -387,22 +387,23 @@ Game.bindOverlay = function () {
   });
 };
 
-/* ---------- คีย์บอร์ด (เล่นบน PC) ---------- */
+/* ---------- คีย์บอร์ด (เล่นบน PC) ----------
+ * ใช้ e.code (ตำแหน่งปุ่มจริง) — WASD ใช้ได้แม้สลับภาษาคีย์บอร์ด (ไทย ฯลฯ) */
 Game.bindKeyboard = function () {
-  const keyDir = (k) => ({
-    ArrowUp: "up", w: "up", W: "up", ArrowDown: "down", s: "down", S: "down",
-    ArrowLeft: "left", a: "left", A: "left", ArrowRight: "right", d: "right", D: "right",
-  }[k]);
+  const keyDir = (e) => ({
+    KeyW: "up", KeyS: "down", KeyA: "left", KeyD: "right",
+    ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right",
+  }[e.code]);
   document.addEventListener("keydown", (e) => {
     if (State.screen !== "world") return;
     if (Game.chatOpen) return;                         // กำลังพิมพ์แชท ไม่คุมเกม
-    if (e.key === "Enter") { if (Game.openChat) Game.openChat(); e.preventDefault(); return; }  // Enter = เปิดแชท
-    const dir = keyDir(e.key);
+    if (e.code === "Enter" || e.code === "NumpadEnter") { if (Game.openChat) Game.openChat(); e.preventDefault(); return; }  // Enter = เปิดแชท
+    const dir = keyDir(e);
     if (dir) { World.setInput(dir, true); e.preventDefault(); return; }
-    if (e.key === " ") { World.interact(); e.preventDefault(); }   // Space = คุย/โต้ตอบ
+    if (e.code === "Space") { World.interact(); e.preventDefault(); }   // Space = คุย/โต้ตอบ
   });
   document.addEventListener("keyup", (e) => {
-    const dir = keyDir(e.key);
+    const dir = keyDir(e);
     if (dir) World.setInput(dir, false);
   });
   // ล้าง input เมื่อออกจากโฟกัส/สลับแท็บ (กันเดินค้าง)

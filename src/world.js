@@ -85,14 +85,22 @@ World.update = function (dt) {
   World.ensurePos(p);
   const map = World.currentMap();
   dt = Math.min(dt, 60);                 // กันกระตุกเมื่อสลับแท็บ
-  let vx = (World.input.right ? 1 : 0) - (World.input.left ? 1 : 0);
-  let vy = (World.input.down ? 1 : 0) - (World.input.up ? 1 : 0);
-  World.movingNow = !!(vx || vy);
+  // ปุ่มคือทิศ "บนจอ" ตรงๆ (ขึ้น = ตัวละครเดินขึ้นจอ) — ไม่ผูกกับแกน grid
+  const sxv = (World.input.right ? 1 : 0) - (World.input.left ? 1 : 0);
+  const syv = (World.input.down ? 1 : 0) - (World.input.up ? 1 : 0);
+  World.movingNow = !!(sxv || syv);
 
   if (World.movingNow) {
-    if (vx && vy) { const s = 0.7071; vx *= s; vy *= s; }
-    if (Math.abs(vx) >= Math.abs(vy)) World.facing = vx > 0 ? "right" : "left";
-    else World.facing = vy > 0 ? "down" : "up";
+    // แปลงเวกเตอร์จอ -> เวกเตอร์ grid (isometric 2:1):
+    // แกนจอ-x 1 หน่วย = grid (0.5,-0.5), แกนจอ-y 1 หน่วย = grid (1,1)
+    const sl = Math.hypot(sxv, syv);
+    const ux = sxv / sl, uy = syv / sl;
+    let vx = ux * 0.5 + uy, vy = -ux * 0.5 + uy;
+    const gl = Math.hypot(vx, vy) || 1;
+    vx /= gl; vy /= gl;
+    World.velX = vx; World.velY = vy;      // ให้ renderer ใช้หันหน้าตัวละคร
+    if (Math.abs(sxv) >= Math.abs(syv)) World.facing = sxv > 0 ? "right" : "left";
+    else World.facing = syv > 0 ? "down" : "up";
 
     const spd = 4.8 * (dt / 1000);       // ~4.8 ช่อง/วินาที
     const nfx = p.fx + vx * spd;

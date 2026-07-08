@@ -318,9 +318,7 @@ Iso.syncPlayer = function (dt) {
   World.ensurePos(p);
   if (!Iso.playerGroup) Iso.playerGroup = Iso.makeHeroGroup(p.classId, p.equip);
   const g = Iso.refreshHeroGear(Iso.playerGroup, p.classId, p.equip);
-  const vx = (World.input.right ? 1 : 0) - (World.input.left ? 1 : 0);
-  const vy = (World.input.down ? 1 : 0) - (World.input.up ? 1 : 0);
-  const d = Iso.dirFromVel(vx, vy);
+  const d = World.movingNow ? Iso.dirFromVel(World.velX || 0, World.velY || 0) : null;
   if (d !== null) Iso.playerDir = d;
   const moving = World.movingNow && !World.locked;
   Iso.setHeroFrame(g, moving ? "run" : "stance", Iso.playerDir);
