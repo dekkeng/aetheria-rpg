@@ -171,265 +171,209 @@ GameData.tiles = {
   9: { name: "lava",  color: "#d1471f", walk: false, deco: "🌋" },          // ลาวา (เอมเบอร์พีค)
 };
 
-// helper: แปลง string map เป็น grid ตัวเลข
+// helper: แปลง string map เป็น grid ตัวเลข (คงไว้เผื่อใช้)
 function parseMap(rows) {
   return rows.map((r) => r.split("").map((c) => parseInt(c, 10)));
 }
 
+/* ============================================================
+ * ตัวสร้างแผนที่แบบ deterministic (seeded) — ใหญ่ + มีฉากหลากหลาย
+ * การันตีเดินถึง: force ช่อง anchor เป็นพื้นเดินได้ แล้ว carve เส้นทาง
+ * จาก spawn ไปยังทุกประตู/NPC (ผ่านสิ่งกีดขวางได้เสมอ)
+ * ---------------------------------------------------------- */
+function _rng(a) {
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function buildMap(spec) {
+  const W = spec.W, H = spec.H, base = spec.base, border = spec.border;
+  const g = [];
+  for (let y = 0; y < H; y++) {
+    const r = [];
+    for (let x = 0; x < W; x++) r.push((x === 0 || y === 0 || x === W - 1 || y === H - 1) ? border : base);
+    g.push(r);
+  }
+  const setb = (x, y, t) => { if (x >= 0 && y >= 0 && x < W && y < H) g[y][x] = t; };
+  // สิ่งปลูกสร้าง/แหล่งน้ำ เป็นบล็อกสี่เหลี่ยม
+  (spec.rects || []).forEach(([x0, y0, x1, y1, t]) => {
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) setb(x, y, t);
+  });
+  // ฉากสุ่ม (seeded) — เว้นช่อง anchor
+  const keep = new Set((spec.clear || []).map((c) => c[0] + "," + c[1]));
+  const rnd = _rng(spec.seed || 1);
+  for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) {
+    if (keep.has(x + "," + y)) continue;
+    const r = rnd(); let acc = 0;
+    for (const s of (spec.scenery || [])) { acc += s[1]; if (r < acc) { setb(x, y, s[0]); break; } }
+  }
+  // บังคับช่อง anchor ให้เดินได้เสมอ
+  (spec.clear || []).forEach(([x, y]) => setb(x, y, base));
+  // carve เส้นทาง L จาก spawn ไปทุกจุดเชื่อม (การันตีเดินถึง)
+  const carve = (x0, y0, x1, y1) => {
+    let x = x0, y = y0;
+    while (x !== x1) { setb(x, y, base); x += x1 > x ? 1 : -1; }
+    while (y !== y1) { setb(x, y, base); y += y1 > y ? 1 : -1; }
+    setb(x1, y1, base);
+  };
+  const sp = spec.spawn;
+  (spec.connect || []).forEach((c) => carve(sp[0], sp[1], c[0], c[1]));
+  return g;
+}
+
 GameData.maps = {
   town: {
-    id: "town",
-    name: "หมู่บ้านเอลดาร์",
-    encounters: [],
-    grid: parseMap([
-      "1111111111111111",
-      "1333333333333331",
-      "1300030003000031",
-      "1303330333033031",
-      "1300030003000031",
-      "1333333333333331",
-      "1303303333033031",
-      "1300000000000031",
-      "1333333333333331",
-      "1300030003000031",
-      "1303330333033031",
-      "1300030003000031",
-      "1333333333333331",
-      "1300000000000031",
-      "1333333333330331",
-      "1111111111101111",
-    ]),
+    id: "town", name: "หมู่บ้านเอลดาร์", encounters: [],
+    grid: buildMap({
+      W: 32, H: 24, base: 3, border: 6, seed: 11,
+      rects: [
+        [4, 4, 9, 8, 6], [22, 4, 27, 8, 6], [4, 15, 9, 19, 6], [22, 15, 27, 19, 6],
+        [13, 13, 18, 17, 2], [14, 14, 17, 16, 2],
+      ],
+      scenery: [[0, 0.09], [1, 0.05]],
+      spawn: [16, 20],
+      clear: [[16, 20], [16, 22], [16, 21], [11, 6], [21, 6], [21, 17], [11, 17], [16, 10]],
+      connect: [[16, 22], [16, 21], [11, 6], [21, 6], [21, 17], [11, 17], [16, 10]],
+    }),
     npcs: [
-      { id: "elder", x: 3, y: 2 },
-      { id: "merchant", x: 8, y: 2 },
-      { id: "guard", x: 12, y: 8 },
-      { id: "healer", x: 6, y: 10 },
-      { id: "pip", x: 9, y: 13 },
+      { id: "elder", x: 11, y: 6 }, { id: "merchant", x: 21, y: 6 },
+      { id: "guard", x: 21, y: 17 }, { id: "healer", x: 11, y: 17 }, { id: "pip", x: 16, y: 10 },
     ],
-    portals: [
-      { x: 11, y: 15, to: "field", tx: 8, ty: 1 }, // ประตูออกเมือง (ล่าง)
-    ],
-    spawn: { x: 8, y: 8 },
+    portals: [{ x: 16, y: 22, to: "field", tx: 16, ty: 2 }],
+    spawn: { x: 16, y: 20 },
   },
 
   field: {
-    id: "field",
-    name: "ทุ่งกรีนฟิลด์ส",
+    id: "field", name: "ทุ่งกรีนฟิลด์ส",
     encounters: [
-      { enemy: "slime", weight: 5 },
-      { enemy: "bat", weight: 3 },
-      { enemy: "wolf", weight: 2 },
+      { enemy: "slime", weight: 5 }, { enemy: "bat", weight: 3 }, { enemy: "wolf", weight: 2 },
     ],
-    grid: parseMap([
-      "1111111100111111",
-      "4444444004444441",
-      "4404444444440441",
-      "4444004444004441",
-      "1444444444444441",
-      "1444004444444441",
-      "2244444444004441",
-      "2244044444444441",
-      "1444444444444441",
-      "1444004444044441",
-      "1444444444444441",
-      "1440044444444421",
-      "1444444004444422",
-      "1444444444444421",
-      "1114444444444111",
-      "1111110011111111",
-    ]),
+    grid: buildMap({
+      W: 32, H: 24, base: 4, border: 1, seed: 22,
+      rects: [[5, 6, 10, 10, 2], [6, 7, 9, 9, 2], [21, 14, 26, 18, 6]],
+      scenery: [[1, 0.10], [0, 0.10], [2, 0.05]],
+      spawn: [16, 2],
+      clear: [[16, 1], [16, 2], [16, 22], [16, 21], [9, 18], [23, 9]],
+      connect: [[16, 1], [16, 22], [16, 21], [9, 18], [23, 9]],
+    }),
     npcs: [
-      { id: "isolde", x: 8, y: 13 },                       // ผู้พิทักษ์เฝ้าประตูป่า
-      { id: "goblin_chief_boss", x: 2, y: 8, boss: "goblin_chief" }, // ซากปรัก
+      { id: "isolde", x: 9, y: 18 },
+      { id: "goblin_chief_boss", x: 23, y: 9, boss: "goblin_chief" },
     ],
     portals: [
-      { x: 8, y: 0, to: "town", tx: 11, ty: 14 },   // กลับเมือง
-      { x: 8, y: 15, to: "forest", tx: 8, ty: 1, lock: { flag: "thornwood_open", level: 5, msg: "ประตูป่าธอร์นวูดถูกผนึก — คุยกับเลดี้อิโซลด์เพื่อขออนุญาตเข้า" } },
+      { x: 16, y: 1, to: "town", tx: 16, ty: 21 },
+      { x: 16, y: 22, to: "forest", tx: 16, ty: 2, lock: { flag: "thornwood_open", level: 5, msg: "ประตูป่าธอร์นวูดถูกผนึก — คุยกับเลดี้อิโซลด์เพื่อขออนุญาตเข้า" } },
     ],
-    spawn: { x: 8, y: 1 },
+    spawn: { x: 16, y: 2 },
   },
 
   forest: {
-    id: "forest",
-    name: "ป่าธอร์นวูด",
-    encounters: [
-      { enemy: "dire_wolf", weight: 4 },
-      { enemy: "treant", weight: 3 },
-    ],
-    grid: parseMap([
-      "1111111001111111",
-      "1444114444114441",
-      "1441144444114441",
-      "1444444004444441",
-      "1141144441144141",
-      "1444444444444441",
-      "1444114400114441",
-      "1141144444114141",
-      "1444444444444441",
-      "1444004411044441",
-      "1141144444114141",
-      "1444444444444441",
-      "1444114444114441",
-      "1441144004114441",
-      "1114444444444111",
-      "1111110011111111",
-    ]),
+    id: "forest", name: "ป่าธอร์นวูด",
+    encounters: [{ enemy: "dire_wolf", weight: 4 }, { enemy: "treant", weight: 3 }],
+    grid: buildMap({
+      W: 32, H: 24, base: 4, border: 1, seed: 33,
+      rects: [[7, 8, 11, 12, 1], [20, 6, 24, 10, 1], [12, 15, 19, 18, 2]],
+      scenery: [[1, 0.24], [2, 0.03], [0, 0.05]],
+      spawn: [16, 2],
+      clear: [[16, 1], [16, 2], [16, 22], [16, 21], [16, 6], [16, 19]],
+      connect: [[16, 1], [16, 22], [16, 21], [16, 6], [16, 19]],
+    }),
     npcs: [
-      { id: "isolde", x: 8, y: 2 },                       // ผู้นำทางในป่า
-      { id: "bramblewrath_boss", x: 8, y: 12, boss: "bramblewrath" },
+      { id: "isolde", x: 16, y: 6 },
+      { id: "bramblewrath_boss", x: 16, y: 19, boss: "bramblewrath" },
     ],
     portals: [
-      { x: 8, y: 0, to: "field", tx: 8, ty: 14 },  // กลับทุ่ง
-      { x: 8, y: 15, to: "emberpeak", tx: 5, ty: 1, lock: { flag: "emberpeak_open", level: 9, msg: "ช่องเขาเอมเบอร์พีคร้อนระอุ — ต้องได้ตราจากอิโซลด์ก่อน" } },
+      { x: 16, y: 1, to: "field", tx: 16, ty: 21 },
+      { x: 16, y: 22, to: "emberpeak", tx: 16, ty: 2, lock: { flag: "emberpeak_open", level: 9, msg: "ช่องเขาเอมเบอร์พีคร้อนระอุ — ต้องได้ตราจากอิโซลด์ก่อน" } },
     ],
-    spawn: { x: 8, y: 1 },
+    spawn: { x: 16, y: 2 },
   },
 
-  // ================= องก์ 3: เอมเบอร์พีค =================
   emberpeak: {
-    id: "emberpeak",
-    name: "ภูเขาไฟเอมเบอร์พีค",
-    encounters: [
-      { enemy: "fire_imp", weight: 4 },
-      { enemy: "magma_golem", weight: 2 },
-    ],
-    grid: parseMap([
-      "6666666666666666",
-      "6555559955555556",
-      "6559955595599556",
-      "6555555555555556",
-      "6595566665665956",
-      "6555555555555556",
-      "6555995555995556",
-      "6559955555559956",
-      "6555555555555556",
-      "6595566655665956",
-      "6555559955555556",
-      "6555555555555556",
-      "6559955555599556",
-      "6555555555555556",
-      "6665555555555666",
-      "6666665556666666",
-    ]),
+    id: "emberpeak", name: "ภูเขาไฟเอมเบอร์พีค",
+    encounters: [{ enemy: "fire_imp", weight: 4 }, { enemy: "magma_golem", weight: 2 }],
+    grid: buildMap({
+      W: 32, H: 24, base: 5, border: 6, seed: 44,
+      rects: [[5, 7, 10, 11, 9], [21, 13, 27, 18, 9], [13, 9, 18, 12, 6]],
+      scenery: [[9, 0.09], [6, 0.07]],
+      spawn: [16, 2],
+      clear: [[16, 1], [16, 2], [16, 22], [16, 21], [16, 6], [16, 19]],
+      connect: [[16, 1], [16, 22], [16, 21], [16, 6], [16, 19]],
+    }),
     npcs: [
-      { id: "grimm", x: 8, y: 2 },
-      { id: "ignathor_boss", x: 8, y: 13, boss: "ignathor" },
+      { id: "grimm", x: 16, y: 6 },
+      { id: "ignathor_boss", x: 16, y: 19, boss: "ignathor" },
     ],
     portals: [
-      { x: 5, y: 0, to: "forest", tx: 8, ty: 14 },
-      { x: 8, y: 15, to: "mistfen", tx: 8, ty: 1, lock: { flag: "mistfen_open", level: 14, msg: "หมอกพิษบึงมิสท์เฟนหนาแน่น — ต้องมีตะเกียงหมอกจากกริมม์" } },
+      { x: 16, y: 1, to: "forest", tx: 16, ty: 21 },
+      { x: 16, y: 22, to: "mistfen", tx: 16, ty: 2, lock: { flag: "mistfen_open", level: 14, msg: "หมอกพิษบึงมิสท์เฟนหนาแน่น — ต้องมีตะเกียงหมอกจากกริมม์" } },
     ],
-    spawn: { x: 8, y: 1 },
+    spawn: { x: 16, y: 2 },
   },
 
-  // ================= องก์ 4: บึงมิสท์เฟน =================
   mistfen: {
-    id: "mistfen",
-    name: "บึงมิสท์เฟน",
+    id: "mistfen", name: "บึงมิสท์เฟน",
     encounters: [
-      { enemy: "bog_lurker", weight: 4 },
-      { enemy: "will_o_wisp", weight: 3 },
-      { enemy: "dire_wolf", weight: 1 },
+      { enemy: "bog_lurker", weight: 4 }, { enemy: "will_o_wisp", weight: 3 }, { enemy: "dire_wolf", weight: 1 },
     ],
-    grid: parseMap([
-      "1111111001111111",
-      "1444224444224441",
-      "1442244444422441",
-      "1444444224444441",
-      "1424424444242441",
-      "1444444444444441",
-      "1442244422244441",
-      "1424442444424241",
-      "1444444444444441",
-      "1442244244224441",
-      "1444422444224441",
-      "1424444444444241",
-      "1444224444224441",
-      "1444444444444441",
-      "1114444444444111",
-      "1111110011111111",
-    ]),
+    grid: buildMap({
+      W: 32, H: 24, base: 4, border: 1, seed: 55,
+      rects: [[5, 6, 11, 11, 2], [20, 13, 27, 19, 2], [13, 8, 18, 11, 2]],
+      scenery: [[2, 0.18], [1, 0.06]],
+      spawn: [16, 2],
+      clear: [[16, 1], [16, 2], [16, 22], [16, 21], [16, 6], [16, 19]],
+      connect: [[16, 1], [16, 22], [16, 21], [16, 6], [16, 19]],
+    }),
     npcs: [
-      { id: "maeve", x: 8, y: 2 },
-      { id: "bog_horror_boss", x: 8, y: 12, boss: "bog_horror" },
+      { id: "maeve", x: 16, y: 6 },
+      { id: "bog_horror_boss", x: 16, y: 19, boss: "bog_horror" },
     ],
     portals: [
-      { x: 8, y: 0, to: "emberpeak", tx: 8, ty: 14 },
-      { x: 8, y: 15, to: "frostspire", tx: 8, ty: 1, lock: { flag: "frostspire_open", level: 18, msg: "พายุหิมะปิดทางฟรอสต์สไปร์ — ต้องรู้ความจริงจากอาจารย์โรวันก่อน" } },
+      { x: 16, y: 1, to: "emberpeak", tx: 16, ty: 21 },
+      { x: 16, y: 22, to: "frostspire", tx: 16, ty: 2, lock: { flag: "frostspire_open", level: 18, msg: "พายุหิมะปิดทางฟรอสต์สไปร์ — ต้องรู้ความจริงจากอาจารย์โรวันก่อน" } },
     ],
-    spawn: { x: 8, y: 1 },
+    spawn: { x: 16, y: 2 },
   },
 
-  // ================= องก์ 5: เทือกเขาฟรอสต์สไปร์ =================
   frostspire: {
-    id: "frostspire",
-    name: "เทือกเขาฟรอสต์สไปร์",
-    encounters: [
-      { enemy: "frost_wraith", weight: 4 },
-      { enemy: "ice_golem", weight: 2 },
-    ],
-    grid: parseMap([
-      "6666666666666666",
-      "6777788777887776",
-      "6778877777778876",
-      "6777777887777776",
-      "6787788778877876",
-      "6777777777777776",
-      "6778877887788776",
-      "6787777777777876",
-      "6777788777887776",
-      "6778877777778876",
-      "6777777887777776",
-      "6787788778877876",
-      "6777777777777776",
-      "6667777777777666",
-      "6666677777766666",
-      "6666666776666666",
-    ]),
+    id: "frostspire", name: "เทือกเขาฟรอสต์สไปร์",
+    encounters: [{ enemy: "frost_wraith", weight: 4 }, { enemy: "ice_golem", weight: 2 }],
+    grid: buildMap({
+      W: 32, H: 24, base: 7, border: 6, seed: 66,
+      rects: [[6, 7, 11, 11, 8], [20, 7, 25, 11, 8], [12, 14, 19, 18, 8]],
+      scenery: [[8, 0.10], [6, 0.05]],
+      spawn: [16, 2],
+      clear: [[16, 1], [16, 2], [16, 22], [16, 21], [16, 6], [16, 19]],
+      connect: [[16, 1], [16, 22], [16, 21], [16, 6], [16, 19]],
+    }),
     npcs: [
-      { id: "nyx", x: 8, y: 2 },
-      { id: "nyx_boss", x: 8, y: 12, boss: "nyx_duel" },
+      { id: "nyx", x: 16, y: 6 },
+      { id: "nyx_boss", x: 16, y: 19, boss: "nyx_duel" },
     ],
     portals: [
-      { x: 8, y: 0, to: "mistfen", tx: 8, ty: 14 },
-      { x: 8, y: 15, to: "citadel", tx: 8, ty: 1, lock: { flag: "citadel_open", level: 24, msg: "ประตูป้อมเถ้าธุลีปิดสนิท — ต้องรวมเสี้ยวครบทั้งสี่ก่อน" } },
+      { x: 16, y: 1, to: "mistfen", tx: 16, ty: 21 },
+      { x: 16, y: 22, to: "citadel", tx: 16, ty: 2, lock: { flag: "citadel_open", level: 24, msg: "ประตูป้อมเถ้าธุลีปิดสนิท — ต้องรวมเสี้ยวครบทั้งสี่ก่อน" } },
     ],
-    spawn: { x: 8, y: 1 },
+    spawn: { x: 16, y: 2 },
   },
 
-  // ================= องก์ 6: ป้อมเถ้าธุลี =================
   citadel: {
-    id: "citadel",
-    name: "ป้อมเถ้าธุลี",
-    encounters: [
-      { enemy: "ashen_knight", weight: 3 },
-      { enemy: "wraith", weight: 3 },
-    ],
-    grid: parseMap([
-      "6666666666666666",
-      "6555556556555556",
-      "6565556556555656",
-      "6555556666655556",
-      "6556665555666556",
-      "6555555555555556",
-      "6555665665665556",
-      "6565555555555656",
-      "6555556556555556",
-      "6556665665666556",
-      "6555555555555556",
-      "6565566666655656",
-      "6555556556555556",
-      "6655555555555566",
-      "6665555555556666",
-      "6666665556666666",
-    ]),
-    npcs: [
-      { id: "vheron", x: 8, y: 12, boss: "vheron" },
-    ],
-    portals: [
-      { x: 8, y: 0, to: "frostspire", tx: 8, ty: 14 },
-    ],
-    spawn: { x: 8, y: 1 },
+    id: "citadel", name: "ป้อมเถ้าธุลี",
+    encounters: [{ enemy: "ashen_knight", weight: 3 }, { enemy: "wraith", weight: 3 }],
+    grid: buildMap({
+      W: 32, H: 24, base: 5, border: 6, seed: 77,
+      rects: [[6, 6, 10, 10, 6], [21, 6, 25, 10, 6], [6, 14, 10, 18, 6], [21, 14, 25, 18, 6]],
+      scenery: [[6, 0.12], [9, 0.03]],
+      spawn: [16, 2],
+      clear: [[16, 1], [16, 2], [16, 18]],
+      connect: [[16, 1], [16, 18]],
+    }),
+    npcs: [{ id: "vheron", x: 16, y: 18, boss: "vheron" }],
+    portals: [{ x: 16, y: 1, to: "frostspire", tx: 16, ty: 21 }],
+    spawn: { x: 16, y: 2 },
   },
 };
 
