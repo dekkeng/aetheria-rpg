@@ -34,7 +34,7 @@ State.createPlayer = function (name, classId) {
       { id: "potion", qty: 3 },
       { id: "wood_sword", qty: 1 },
     ],
-    equip: { weapon: null, armor: null },
+    equip: State.emptyEquip(),
     quests: {},          // (legacy — ไม่ใช้แล้ว)
     kills: {},           // enemyId -> count (นับรวม)
     map: "town",
@@ -52,23 +52,47 @@ State.createPlayer = function (name, classId) {
   };
 };
 
+/* ---------- ระบบสวมใส่ (11 ช่อง) ---------- */
+State.EQUIP_SLOTS = ["head", "body", "hand_l", "hand_r", "legs", "boots",
+  "necklace", "ring1", "ring2", "earring1", "earring2"];
+
+State.emptyEquip = function () {
+  const e = {};
+  State.EQUIP_SLOTS.forEach((s) => (e[s] = null));
+  return e;
+};
+
+/* ช่องเป้าหมายของไอเทม (ไอเทมเก่าที่ไม่มี slot ใช้ type แทน) */
+State.itemSlot = function (it) {
+  if (!it) return null;
+  if (it.slot) return it.slot;               // "head","body","hand_l","hand_r","legs","boots","necklace","ring","earring"
+  return ({ weapon: "hand_r", armor: "body" })[it.type] || null;
+};
+
+/* รวมค่าสเตตัสจากอุปกรณ์ที่สวมทุกช่อง */
+State.equipStat = function (p, stat) {
+  let s = 0;
+  const e = p.equip || {};
+  for (const k in e) {
+    const it = e[k] && GameData.items[e[k]];
+    if (it) s += it[stat] || 0;
+  }
+  return s;
+};
+
 /* ค่าพลังรวม (base + อุปกรณ์สวมใส่ + คู่หูสัตว์เลี้ยง) */
 State.totalAtk = function (p) {
-  let a = p.atk;
-  const w = p.equip.weapon;
-  if (w && GameData.items[w]) a += GameData.items[w].atk || 0;
+  let a = p.atk + State.equipStat(p, "atk");
   if (typeof Pets !== "undefined") a += Pets.stat(p, "atk");
   return a;
 };
 State.totalDef = function (p) {
-  let d = p.def;
-  const ar = p.equip.armor;
-  if (ar && GameData.items[ar]) d += GameData.items[ar].def || 0;
+  let d = p.def + State.equipStat(p, "def");
   if (typeof Pets !== "undefined") d += Pets.stat(p, "def");
   return d;
 };
 State.totalSpd = function (p) {
-  let s = p.spd;
+  let s = p.spd + State.equipStat(p, "spd");
   if (typeof Pets !== "undefined") s += Pets.stat(p, "spd");
   return s;
 };
@@ -165,7 +189,16 @@ State.ensureProgression = function (p) {
   if (typeof p.skillPoints !== "number") p.skillPoints = 0;
   if (!Array.isArray(p.pets)) p.pets = [];
   if (p.activePet === undefined) p.activePet = null;
-  if (!p.equip || typeof p.equip !== "object") p.equip = { weapon: null, armor: null };
+  // migrate ช่องสวมใส่: จาก {weapon,armor} เดิม -> 11 ช่อง
+  if (!p.equip || typeof p.equip !== "object") p.equip = State.emptyEquip();
+  if ("weapon" in p.equip || "armor" in p.equip || !("hand_r" in p.equip)) {
+    const old = p.equip;
+    const e = State.emptyEquip();
+    if (old.hand_r || old.weapon) e.hand_r = old.hand_r || old.weapon;
+    if (old.body || old.armor) e.body = old.body || old.armor;
+    State.EQUIP_SLOTS.forEach((s) => { if (old[s]) e[s] = old[s]; });
+    p.equip = e;
+  }
 };
 
 /* เพิ่มไอเทมเข้ากระเป๋า */

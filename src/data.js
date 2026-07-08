@@ -78,6 +78,23 @@ GameData.items = {
   dragon_mail: { id: "dragon_mail", name: "เกราะเกล็ดมังกร", icon: "🐲", type: "armor", def: 20, price: 600, desc: "DEF +20" },
   aether_robe: { id: "aether_robe", name: "อาภรณ์อีเธอร์", icon: "✨", type: "armor", def: 28, price: 900, desc: "DEF +28" },
 
+  // ---- อุปกรณ์สวมใส่ตามช่อง (หัว/มือซ้าย/ขา/เท้า/เครื่องประดับ) ----
+  leather_cap:  { id: "leather_cap",  name: "หมวกหนัง",    icon: "🧢", type: "helmet",   slot: "head",     def: 3,  price: 40,  desc: "DEF +3" },
+  iron_helm:    { id: "iron_helm",    name: "หมวกเหล็ก",   icon: "🪖", type: "helmet",   slot: "head",     def: 8,  price: 150, desc: "DEF +8" },
+  wooden_shield:{ id: "wooden_shield",name: "โล่ไม้",      icon: "🛡️", type: "shield",   slot: "hand_l",   def: 5,  price: 60,  desc: "DEF +5 (มือซ้าย)" },
+  tower_shield: { id: "tower_shield", name: "โล่หอคอย",    icon: "🛡️", type: "shield",   slot: "hand_l",   def: 12, price: 220, desc: "DEF +12 (มือซ้าย)" },
+  padded_legs:  { id: "padded_legs",  name: "เกราะขาผ้า",  icon: "👖", type: "legs",     slot: "legs",     def: 4,  price: 55,  desc: "DEF +4" },
+  iron_greaves: { id: "iron_greaves", name: "สนับขาเหล็ก", icon: "🦿", type: "legs",     slot: "legs",     def: 10, price: 190, desc: "DEF +10" },
+  leather_boots:{ id: "leather_boots",name: "รองเท้าหนัง", icon: "🥾", type: "boots",    slot: "boots",    def: 1, spd: 2, price: 45, desc: "DEF +1 · SPD +2" },
+  swift_boots:  { id: "swift_boots",  name: "รองเท้าลมกรด",icon: "👢", type: "boots",    slot: "boots",    spd: 5,  price: 170, desc: "SPD +5" },
+  guard_amulet: { id: "guard_amulet", name: "สร้อยพิทักษ์",icon: "📿", type: "necklace", slot: "necklace", def: 5,  price: 130, desc: "DEF +5" },
+  power_amulet: { id: "power_amulet", name: "สร้อยพลัง",   icon: "📿", type: "necklace", slot: "necklace", atk: 5,  price: 150, desc: "ATK +5" },
+  power_ring:   { id: "power_ring",   name: "แหวนพลัง",    icon: "💍", type: "ring",     slot: "ring",     atk: 4,  price: 140, desc: "ATK +4" },
+  guard_ring:   { id: "guard_ring",   name: "แหวนป้องกัน", icon: "💍", type: "ring",     slot: "ring",     def: 4,  price: 140, desc: "DEF +4" },
+  swift_ring:   { id: "swift_ring",   name: "แหวนคล่องแคล่ว",icon:"💍", type: "ring",     slot: "ring",     spd: 3,  price: 140, desc: "SPD +3" },
+  keen_earring: { id: "keen_earring", name: "ตุ้มหูเฉียบคม",icon:"💠",  type: "earring",  slot: "earring",  atk: 2, spd: 1, price: 100, desc: "ATK +2 · SPD +1" },
+  ward_earring: { id: "ward_earring", name: "ตุ้มหูพิทักษ์",icon: "💠",  type: "earring",  slot: "earring",  def: 3,  price: 100, desc: "DEF +3" },
+
   // ตำราสกิล (ใช้เพื่อเรียนรู้/อัพสกิล)
   book_guard_break: { id: "book_guard_break", name: "ตำรา: ทลายเกราะ", icon: "📕", type: "skillbook", skill: "guard_break", price: 200, desc: "เรียนรู้/อัพสกิล ทลายเกราะ" },
   book_multi_slash: { id: "book_multi_slash", name: "ตำรา: รัวดาบ",     icon: "📕", type: "skillbook", skill: "multi_slash", price: 260, desc: "เรียนรู้/อัพสกิล รัวดาบ" },
@@ -143,7 +160,7 @@ GameData.quests = {};
 GameData.npcs = {
   elder:    { id: "elder",    name: "อาจารย์โรวัน",   icon: "🧙", story: true },
   guard:    { id: "guard",    name: "กัปตันโดรัน",     icon: "💂", story: true },
-  merchant: { id: "merchant", name: "เมอร์ริคมือทองแดง", icon: "🧑‍🌾", shop: ["potion", "hi_potion", "ether", "antidote", "wood_sword", "iron_sword", "mythril_bow", "leather_armor", "iron_armor", "dragon_mail", "book_greater_heal", "book_guard_break", "egg_common", "egg_rare", "pet_berry", "pet_meat", "pet_jelly"] },
+  merchant: { id: "merchant", name: "เมอร์ริคมือทองแดง", icon: "🧑‍🌾", shop: ["potion", "hi_potion", "ether", "antidote", "wood_sword", "iron_sword", "mythril_bow", "leather_armor", "iron_armor", "dragon_mail", "leather_cap", "iron_helm", "wooden_shield", "tower_shield", "padded_legs", "iron_greaves", "leather_boots", "swift_boots", "guard_amulet", "power_amulet", "power_ring", "guard_ring", "swift_ring", "keen_earring", "ward_earring", "book_greater_heal", "book_guard_break", "egg_common", "egg_rare", "pet_berry", "pet_meat", "pet_jelly"] },
   healer:   { id: "healer",   name: "บาทหลวงอันเซล์ม", icon: "⛪", heal: true },
   pip:      { id: "pip",      name: "พิพ",            icon: "🧒", story: true },
   isolde:   { id: "isolde",   name: "เลดี้อิโซลด์",    icon: "🏹", story: true },

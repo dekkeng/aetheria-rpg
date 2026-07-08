@@ -282,7 +282,7 @@ World.draw = function () {
       ents.push({
         z: o.y + 1,
         draw: () => {
-          if (spr && !Sprites.drawHero(ctx, o.cls || "warrior", "down", ox, oy, T, false, { weapon: o.weapon, armor: o.armor })) {
+          if (spr && !Sprites.drawHero(ctx, o.cls || "warrior", "down", ox, oy, T, false, { hand_r: o.weapon, body: o.armor })) {
             ctx.font = `${T - 6}px serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("🧑", ox + T / 2, oy + T / 2);
           }
           ctx.font = "600 11px Kanit, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "bottom";

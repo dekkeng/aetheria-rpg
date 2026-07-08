@@ -86,7 +86,7 @@ Battle.showActions = function (show) {
 
 /* เลือกเสียงโจมตีปกติตามอาวุธ/อาชีพ */
 Battle.attackSound = function (p) {
-  const w = p.equip.weapon || "";
+  const w = (p.equip && p.equip.hand_r) || "";
   if (w.includes("bow") || p.classId === "archer") return "bow";
   if (p.classId === "mage") return "magic_hit";
   return "slash";

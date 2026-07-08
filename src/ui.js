@@ -197,8 +197,10 @@ UI.closeOverlay = function () {
 UI.openStats = function () {
   const p = State.player;
   const cls = GameData.classes.find((c) => c.id === p.classId);
-  const w = p.equip.weapon ? GameData.items[p.equip.weapon].name : "— ไม่มี —";
-  const a = p.equip.armor ? GameData.items[p.equip.armor].name : "— ไม่มี —";
+  if (!p.equip) p.equip = State.emptyEquip();
+  const wornCount = State.EQUIP_SLOTS.filter((s) => p.equip[s]).length;
+  const w = p.equip.hand_r ? GameData.items[p.equip.hand_r].name : "— ไม่มี —";
+  const a = p.equip.body ? GameData.items[p.equip.body].name : "— ไม่มี —";
   const pts = p.statPoints || 0;
   // ปุ่ม + สำหรับลงแต้ม (แสดงเมื่อมีแต้ม)
   const plus = (stat) => pts > 0 ? `<button class="statplus" data-stat="${stat}">+</button>` : "";
@@ -211,12 +213,13 @@ UI.openStats = function () {
       <div><span>MP</span><b>${p.mp}/${p.maxMp}</b>${plus("mp")}</div>
       <div><span>ATK</span><b>${State.totalAtk(p)}</b>${plus("atk")}</div>
       <div><span>DEF</span><b>${State.totalDef(p)}</b>${plus("def")}</div>
-      <div><span>SPD</span><b>${p.spd}</b>${plus("spd")}</div>
+      <div><span>SPD</span><b>${State.totalSpd(p)}</b>${plus("spd")}</div>
       <div><span>EXP</span><b>${p.exp}/${GameData.expForLevel(p.level)}</b></div>
     </div>
     <div class="equip-box">
-      <p>🗡️ อาวุธ: <b>${w}</b></p>
-      <p>🛡️ เกราะ: <b>${a}</b></p>
+      <p>🗡️ มือขวา: <b>${w}</b></p>
+      <p>🛡️ ตัว: <b>${a}</b></p>
+      <p style="color:var(--muted)">สวมใส่ทั้งหมด <b>${wornCount}/11</b> ช่อง (ดูรายละเอียดในกระเป๋า)</p>
     </div>
     <button class="btn btn-primary wide" id="open-skills">⚔ จัดการสกิล${(p.skillPoints || 0) > 0 ? ` (มีแต้ม ${p.skillPoints})` : ""}</button>
   `;
@@ -264,20 +267,27 @@ UI.openSkills = function () {
 };
 
 /* ---------- กระเป๋า / ไอเทม ---------- */
-UI.SLOT_LABEL = { weapon: "อาวุธ", armor: "เกราะ" };
-UI.SLOT_PH = { weapon: "🗡️", armor: "🛡️" };
+UI.SLOT_LABEL = {
+  head: "หัว", body: "ตัว", hand_l: "มือซ้าย", hand_r: "มือขวา", legs: "กางเกง", boots: "รองเท้า",
+  necklace: "สร้อยคอ", ring1: "แหวน 1", ring2: "แหวน 2", earring1: "ตุ้มหู 1", earring2: "ตุ้มหู 2",
+};
+UI.SLOT_PH = {
+  head: "🪖", body: "🛡️", hand_l: "🤚", hand_r: "🗡️", legs: "👖", boots: "🥾",
+  necklace: "📿", ring1: "💍", ring2: "💍", earring1: "💠", earring2: "💠",
+};
+UI.SLOT_ORDER = ["head", "body", "legs", "boots", "hand_l", "hand_r", "necklace", "ring1", "ring2", "earring1", "earring2"];
 
 UI.openInventory = function () {
   const p = State.player;
-  if (!p.equip) p.equip = { weapon: null, armor: null };
+  if (!p.equip) p.equip = State.emptyEquip();
 
-  // ---- ช่องสวมใส่ (ด้านบน) ----
-  const eqHtml = ["weapon", "armor"].map((slot) => {
+  // ---- ช่องสวมใส่ (ด้านบน) — 11 ช่อง ----
+  const eqHtml = UI.SLOT_ORDER.map((slot) => {
     const id = p.equip[slot];
     if (id && GameData.items[id]) {
       const it = GameData.items[id];
       return `<button class="eq-slot filled" data-uneq="${slot}" data-id="${id}" title="แตะเพื่อถอด">
-        <span class="eq-ic">${UI.itemIcon(id, 40)}</span>
+        <span class="eq-ic">${UI.itemIcon(id, 34)}</span>
         <span class="eq-lb">${UI.SLOT_LABEL[slot]}<small>${it.name}</small></span>
       </button>`;
     }
@@ -326,14 +336,16 @@ UI.showItemDetail = function (itemId, equippedSlot) {
   if (!box) return;
   const it = GameData.items[itemId];
   if (!it) { box.innerHTML = '<p class="hint">—</p>'; return; }
-  const TYPE_LABEL = { weapon: "อาวุธ", armor: "เกราะ", consume: "ของใช้", skillbook: "ตำราสกิล",
+  const TYPE_LABEL = { weapon: "อาวุธ (มือขวา)", armor: "เกราะ (ตัว)", helmet: "หมวก (หัว)",
+    shield: "โล่ (มือซ้าย)", legs: "เกราะขา", boots: "รองเท้า", necklace: "สร้อยคอ", ring: "แหวน",
+    earring: "ตุ้มหู", consume: "ของใช้", skillbook: "ตำราสกิล",
     petegg: "ไข่สัตว์เลี้ยง", petfood: "อาหารสัตว์", material: "วัตถุดิบ", key: "ไอเทมเนื้อเรื่อง" };
   const stat = TYPE_LABEL[it.type] || "";
 
   let act = "";
   if (equippedSlot) act = `<button class="btn tiny danger" id="inv-act" data-act="unequip" data-slot="${equippedSlot}">ถอด</button>`;
   else if (it.type === "consume") act = `<button class="btn tiny" id="inv-act" data-act="use">ใช้</button>`;
-  else if (it.type === "weapon" || it.type === "armor") act = `<button class="btn tiny" id="inv-act" data-act="equip">สวมใส่</button>`;
+  else if (State.itemSlot(it)) act = `<button class="btn tiny" id="inv-act" data-act="equip">สวมใส่</button>`;
   else if (it.type === "skillbook") act = `<button class="btn tiny" id="inv-act" data-act="learn">เรียนรู้</button>`;
   else if (it.type === "petegg") act = `<button class="btn tiny" id="inv-act" data-act="hatch">ฟัก 🐣</button>`;
   else if (it.type === "petfood") act = `<button class="btn tiny" id="inv-act" data-act="feed">ให้อาหาร</button>`;
@@ -393,14 +405,22 @@ UI.useItem = function (itemId, inBattle) {
   return used;
 };
 
+/* หาช่องเป้าหมายจริง: ring/earring มี 2 ช่อง เลือกช่องว่างก่อน ไม่งั้นช่องแรก */
+UI.resolveSlot = function (p, base) {
+  if (base === "ring") return !p.equip.ring1 ? "ring1" : (!p.equip.ring2 ? "ring2" : "ring1");
+  if (base === "earring") return !p.equip.earring1 ? "earring1" : (!p.equip.earring2 ? "earring2" : "earring1");
+  return base;
+};
+
 /* สวมใส่: ย้ายไอเทมออกจากกระเป๋าไปช่องสวมใส่ (ของเดิมในช่องเด้งกลับกระเป๋า) */
 UI.equipItem = function (itemId) {
   const p = State.player;
   const it = GameData.items[itemId];
-  if (!it || (it.type !== "weapon" && it.type !== "armor")) return;
-  if (!p.equip) p.equip = { weapon: null, armor: null };
+  const base = State.itemSlot(it);
+  if (!base) return;
+  if (!p.equip) p.equip = State.emptyEquip();
   if (State.countItem(p, itemId) <= 0) return;
-  const slot = it.type;               // "weapon" | "armor"
+  const slot = UI.resolveSlot(p, base);
   const prev = p.equip[slot];
   State.removeItem(p, itemId, 1);      // ออกจากกระเป๋า
   if (prev) State.addItem(p, prev, 1); // ของเดิมกลับเข้ากระเป๋า

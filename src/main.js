@@ -44,7 +44,9 @@ Game.bindChat = function () {
     badge.classList.remove("show"); badge.textContent = "";
     setTimeout(() => input.focus(), 50);
   };
-  const closeChat = () => { Game.chatOpen = false; panel.classList.remove("open"); };
+  const closeChat = () => { Game.chatOpen = false; panel.classList.remove("open"); input.blur(); };
+  Game.openChat = openChat;    // ให้คีย์บอร์ด (Enter) เรียกได้
+  Game.closeChat = closeChat;
   UI.$("#chat-toggle").addEventListener("click", () => (Game.chatOpen ? closeChat() : openChat()));
   UI.$("#chat-close").addEventListener("click", closeChat);
 
@@ -55,9 +57,12 @@ Game.bindChat = function () {
     Net.sendChat(t); input.value = "";
   };
   UI.$("#chat-send").addEventListener("click", send);
-  input.addEventListener("keydown", (e) => { if (e.key === "Enter") { send(); e.stopPropagation(); } });
-  // กันคีย์เกม (WASD) ไม่ให้ขยับตัวละครขณะพิมพ์
-  input.addEventListener("keydown", (e) => e.stopPropagation());
+  // Enter = ส่ง (ถ้ามีข้อความ) แล้วปิดกล่องแชท · Esc = ปิดเฉยๆ · คีย์อื่นกันไม่ให้ขยับตัวละคร
+  input.addEventListener("keydown", (e) => {
+    e.stopPropagation();
+    if (e.key === "Enter") { send(); closeChat(); e.preventDefault(); }
+    else if (e.key === "Escape") { closeChat(); e.preventDefault(); }
+  });
 
   // รับข้อความจากเซิร์ฟเวอร์
   Net.onChat = (m) => Game.addChat(m);
@@ -390,9 +395,11 @@ Game.bindKeyboard = function () {
   }[k]);
   document.addEventListener("keydown", (e) => {
     if (State.screen !== "world") return;
+    if (Game.chatOpen) return;                         // กำลังพิมพ์แชท ไม่คุมเกม
+    if (e.key === "Enter") { if (Game.openChat) Game.openChat(); e.preventDefault(); return; }  // Enter = เปิดแชท
     const dir = keyDir(e.key);
     if (dir) { World.setInput(dir, true); e.preventDefault(); return; }
-    if (e.key === " " || e.key === "Enter") { World.interact(); e.preventDefault(); }
+    if (e.key === " ") { World.interact(); e.preventDefault(); }   // Space = คุย/โต้ตอบ
   });
   document.addEventListener("keyup", (e) => {
     const dir = keyDir(e.key);

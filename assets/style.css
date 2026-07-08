@@ -419,18 +419,19 @@ body {
 
 /* ---------- กระเป๋า: ช่องสวมใส่ + กริดไอเทม + รายละเอียด ---------- */
 .inv-section { font-size: 12px; color: var(--accent2); margin: 14px 0 6px; letter-spacing: .5px; font-weight: 600; }
-.equip-slots { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.equip-slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
 .eq-slot {
-  display: flex; align-items: center; gap: 10px; text-align: left; min-height: 58px;
-  background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 8px 10px; color: var(--text);
+  display: flex; align-items: center; gap: 7px; text-align: left; min-height: 46px;
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 6px 7px; color: var(--text);
 }
 .eq-slot.filled { cursor: pointer; border-color: var(--accent2); box-shadow: 0 0 0 1px rgba(123,92,255,.25) inset; }
 .eq-slot.filled:hover { background: #2b2650; }
-.eq-slot.empty { opacity: .55; }
-.eq-ic { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.eq-ic.ph { font-size: 24px; filter: grayscale(.4); opacity: .7; }
-.eq-lb { display: flex; flex-direction: column; font-size: 13px; font-weight: 600; overflow: hidden; }
-.eq-lb small { color: var(--muted); font-size: 11px; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.eq-slot.empty { opacity: .5; }
+.eq-ic { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.eq-ic.ph { font-size: 19px; filter: grayscale(.4); opacity: .7; }
+.eq-lb { display: flex; flex-direction: column; font-size: 11px; font-weight: 600; overflow: hidden; line-height: 1.25; }
+.eq-lb small { color: var(--muted); font-size: 10px; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 460px) { .equip-slots { grid-template-columns: repeat(2, 1fr); } }
 
 .inv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(54px, 1fr)); gap: 8px; margin-top: 4px; }
 .inv-cell {

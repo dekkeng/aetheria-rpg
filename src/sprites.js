@@ -57,8 +57,8 @@ Sprites.drawHero = function (ctx, cls, dir, dx, dy, size, moving, equip) {
   const oy = dy + size - drawSize + size * 0.12;
   ctx.drawImage(Sprites.img.heroes, frame * c, row * c, c, c, ox, oy, drawSize, drawSize);
   // ---- ชุด/อาวุธที่สวมใส่ (overlay แนบเฟรมเดียวกัน) ----
-  Sprites.drawGear(ctx, "armor", equip && equip.armor, dir, frame, ox, oy, drawSize);
-  Sprites.drawGear(ctx, "weapons", equip && equip.weapon, dir, frame, ox, oy, drawSize);
+  Sprites.drawGear(ctx, "armor", equip && equip.body, dir, frame, ox, oy, drawSize);
+  Sprites.drawGear(ctx, "weapons", equip && equip.hand_r, dir, frame, ox, oy, drawSize);
   return true;   // คืน true เพื่อให้ผู้เรียกรู้ว่าวาด sprite สำเร็จ (ไม่ต้อง fallback emoji)
 };
 
@@ -84,8 +84,8 @@ Sprites.drawHeroBattle = function (ctx, cls, dir, size, equip) {
   const c = H.cell;
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(Sprites.img.heroes, frame * c, row * c, c, c, 0, 0, size, size);
-  Sprites.drawGear(ctx, "armor", equip && equip.armor, dir, frame, 0, 0, size);
-  Sprites.drawGear(ctx, "weapons", equip && equip.weapon, dir, frame, 0, 0, size);
+  Sprites.drawGear(ctx, "armor", equip && equip.body, dir, frame, 0, 0, size);
+  Sprites.drawGear(ctx, "weapons", equip && equip.hand_r, dir, frame, 0, 0, size);
 };
 
 /* วาดมอนสเตอร์ (idle) — ใช้ทั้งบนแผนที่และในฉากต่อสู้
