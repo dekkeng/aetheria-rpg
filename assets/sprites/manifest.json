@@ -95,6 +95,102 @@
       0
     ]
   },
+  "helmets": {
+    "cell": 48,
+    "frames": 4,
+    "rows": {
+      "leather_cap_down": 0,
+      "leather_cap_up": 1,
+      "leather_cap_left": 2,
+      "leather_cap_right": 3,
+      "iron_helm_down": 4,
+      "iron_helm_up": 5,
+      "iron_helm_left": 6,
+      "iron_helm_right": 7
+    },
+    "idle": [
+      0,
+      1
+    ],
+    "walk": [
+      2,
+      0,
+      3,
+      0
+    ]
+  },
+  "shields": {
+    "cell": 48,
+    "frames": 4,
+    "rows": {
+      "wooden_shield_down": 0,
+      "wooden_shield_up": 1,
+      "wooden_shield_left": 2,
+      "wooden_shield_right": 3,
+      "tower_shield_down": 4,
+      "tower_shield_up": 5,
+      "tower_shield_left": 6,
+      "tower_shield_right": 7
+    },
+    "idle": [
+      0,
+      1
+    ],
+    "walk": [
+      2,
+      0,
+      3,
+      0
+    ]
+  },
+  "legs": {
+    "cell": 48,
+    "frames": 4,
+    "rows": {
+      "padded_legs_down": 0,
+      "padded_legs_up": 1,
+      "padded_legs_left": 2,
+      "padded_legs_right": 3,
+      "iron_greaves_down": 4,
+      "iron_greaves_up": 5,
+      "iron_greaves_left": 6,
+      "iron_greaves_right": 7
+    },
+    "idle": [
+      0,
+      1
+    ],
+    "walk": [
+      2,
+      0,
+      3,
+      0
+    ]
+  },
+  "boots": {
+    "cell": 48,
+    "frames": 4,
+    "rows": {
+      "leather_boots_down": 0,
+      "leather_boots_up": 1,
+      "leather_boots_left": 2,
+      "leather_boots_right": 3,
+      "swift_boots_down": 4,
+      "swift_boots_up": 5,
+      "swift_boots_left": 6,
+      "swift_boots_right": 7
+    },
+    "idle": [
+      0,
+      1
+    ],
+    "walk": [
+      2,
+      0,
+      3,
+      0
+    ]
+  },
   "enemies": {
     "cell": 48,
     "frames": 2,

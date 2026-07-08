@@ -137,7 +137,9 @@ function send(c, obj) { try { if (c.ws.readyState === 1) c.ws.send(JSON.stringif
 function broadcastAll(obj) { for (const c of clients.values()) send(c, obj); }
 function rosterOfMap(map) {
   return [...clients.values()].filter((c) => c.map === map)
-    .map((c) => ({ id: c.id, name: c.name, x: c.x, y: c.y, cls: c.cls, weapon: c.weapon || null, armor: c.armor || null }));
+    .map((c) => ({ id: c.id, name: c.name, x: c.x, y: c.y, cls: c.cls,
+      weapon: c.weapon || null, armor: c.armor || null,
+      head: c.head || null, offhand: c.offhand || null, legs: c.legs || null, boots: c.boots || null }));
 }
 function broadcastMap(map) {
   if (!map) return;
@@ -156,7 +158,8 @@ wss.on("connection", (ws, req) => {
     const guest = url.searchParams.get("name");
     if (name === "ผู้เดินทาง" && guest) name = guest.slice(0, 16) + "★";
   } catch (e) {}
-  const c = { ws, id, name, map: null, x: 8, y: 8, cls: "warrior", weapon: null, armor: null };
+  const c = { ws, id, name, map: null, x: 8, y: 8, cls: "warrior",
+    weapon: null, armor: null, head: null, offhand: null, legs: null, boots: null };
   clients.set(id, c);
   send(c, { type: "welcome", id, name, online: clients.size });
 
@@ -168,6 +171,10 @@ wss.on("connection", (ws, req) => {
       c.map = m.map; c.x = m.x; c.y = m.y; c.cls = m.cls || c.cls;
       if ("weapon" in m) c.weapon = m.weapon;
       if ("armor" in m) c.armor = m.armor;
+      if ("head" in m) c.head = m.head;
+      if ("offhand" in m) c.offhand = m.offhand;
+      if ("legs" in m) c.legs = m.legs;
+      if ("boots" in m) c.boots = m.boots;
       if (oldMap && oldMap !== c.map) broadcastMap(oldMap);   // อัปเดตแมพเดิม
       broadcastMap(c.map);
     } else if (m.type === "chat") {

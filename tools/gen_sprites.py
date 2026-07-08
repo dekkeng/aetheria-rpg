@@ -265,6 +265,92 @@ def build_gear(kind, looks, drawfn):
     sheet.save(os.path.join(OUT, kind + ".png"))
     return {"cell": S, "frames": 4, "rows": rows, "idle": [0, 1], "walk": [2, 0, 3, 0]}
 
+# ---- overlay เพิ่ม: หมวก(หัว) / โล่(มือซ้าย) / เกราะขา / รองเท้า ----
+HELMET_LOOK = {  # main, hi, shadow
+    "leather_cap": ((150,104,60,255), (192,142,92,255), (110,74,44,255)),
+    "iron_helm":   ((172,180,194,255), (216,222,234,255), (110,118,134,255)),
+}
+SHIELD_LOOK = {  # face, rim, boss
+    "wooden_shield": ((162,118,74,255), (110,80,48,255), (206,166,96,255)),
+    "tower_shield":  ((152,162,180,255), (100,108,126,255), (216,222,234,255)),
+}
+LEGS_LOOK = {    # main, hi, shadow
+    "padded_legs":  ((172,152,122,255), (202,184,152,255), (128,110,84,255)),
+    "iron_greaves": ((150,160,178,255), (200,210,226,255), (96,104,122,255)),
+}
+BOOTS_LOOK = {   # main, hi, accent(ปีก/None)
+    "leather_boots": ((112,82,52,255), (152,112,74,255), None),
+    "swift_boots":   ((88,150,210,255), (152,202,240,255), (244,222,120,255)),
+}
+
+def draw_helmet(look, direction, frame):
+    flip = (direction == "left"); dr = "right" if flip else direction
+    img = new_cell(S, S); d = ImageDraw.Draw(img)
+    main, hi, sh = HELMET_LOOK[look]
+    bob = hero_anim(frame)[0]; cx = CX; hcy = 16 + bob; hr = 10
+    d.pieslice([cx-hr-1, hcy-hr-2, cx+hr+1, hcy+3], 180, 360, fill=main)   # โดม
+    d.pieslice([cx-hr-1, hcy-hr-2, cx+hr+1, hcy-1], 180, 360, fill=hi)     # ไฮไลต์บน
+    rect(d, cx-hr-1, hcy-1, cx+hr+2, hcy+1, sh)                            # ขอบหมวก
+    if look == "iron_helm":
+        if dr == "down":
+            rect(d, cx-1, hcy-1, cx+1, hcy+5, sh)                          # แกนป้องกันจมูก
+        rect(d, cx-1, hcy-hr-2, cx+1, hcy-hr+1, hi)                        # สันหมวก
+    else:
+        ellipse(d, cx-2, hcy-hr-1, cx+1, hcy-hr+2, hi)                     # ปุ่มบนหมวกผ้า
+    add_outline(img, (26,22,38,200))
+    if flip: img = img.transpose(Image.FLIP_LEFT_RIGHT)
+    return img
+
+def draw_shield(look, direction, frame):
+    flip = (direction == "left"); dr = "right" if flip else direction
+    img = new_cell(S, S); d = ImageDraw.Draw(img)
+    face, rim, boss = SHIELD_LOOK[look]
+    bob, legA, legB, arm = hero_anim(frame)
+    cx = CX; by0 = 27 + bob
+    scx = cx - 9; scy = by0 + 7 + arm                     # ตำแหน่งมือซ้าย
+    if look == "tower_shield":
+        rect(d, scx-4, scy-8, scx+3, scy+8, face)         # โล่หอคอย (ยาว)
+        rect(d, scx-4, scy-8, scx-2, scy+8, boss)         # แถบกลางสว่าง
+        rect(d, scx-4, scy-8, scx+3, scy-7, rim); rect(d, scx-4, scy+7, scx+3, scy+8, rim)
+    else:
+        ellipse(d, scx-5, scy-6, scx+4, scy+6, face)      # โล่กลม
+        d.arc([scx-5, scy-6, scx+4, scy+6], 0, 360, fill=rim, width=1)
+        ellipse(d, scx-2, scy-2, scx+1, scy+1, boss)      # ปุ่มกลาง
+    add_outline(img, (26,22,38,200))
+    if flip: img = img.transpose(Image.FLIP_LEFT_RIGHT)
+    return img
+
+def draw_legs(look, direction, frame):
+    flip = (direction == "left")
+    img = new_cell(S, S); d = ImageDraw.Draw(img)
+    main, hi, sh = LEGS_LOOK[look]
+    bob, legA, legB, arm = hero_anim(frame); cx = CX
+    rect(d, cx-5, 37+bob, cx-1, 43+bob+legA, main)        # ขาซ้าย
+    rect(d, cx+1, 37+bob, cx+5, 43+bob+legB, main)        # ขาขวา
+    rect(d, cx-5, 37+bob, cx-3, 43+bob+legA, hi)          # ไฮไลต์
+    rect(d, cx+1, 37+bob, cx+3, 43+bob+legB, hi)
+    rect(d, cx-5, 42+bob+legA, cx-1, 43+bob+legA, sh)
+    rect(d, cx+1, 42+bob+legB, cx+5, 43+bob+legB, sh)
+    add_outline(img, (26,22,38,190))
+    if flip: img = img.transpose(Image.FLIP_LEFT_RIGHT)
+    return img
+
+def draw_boots(look, direction, frame):
+    flip = (direction == "left")
+    img = new_cell(S, S); d = ImageDraw.Draw(img)
+    main, hi, acc = BOOTS_LOOK[look]
+    bob, legA, legB, arm = hero_anim(frame); cx = CX
+    rect(d, cx-6, 42+bob+legA, cx-1, 45+bob+legA, main)   # รองเท้าซ้าย
+    rect(d, cx+1, 42+bob+legB, cx+6, 45+bob+legB, main)   # รองเท้าขวา
+    rect(d, cx-6, 42+bob+legA, cx-1, 43+bob+legA, hi)
+    rect(d, cx+1, 42+bob+legB, cx+6, 43+bob+legB, hi)
+    if acc:                                               # ปีกข้างรองเท้า (swift)
+        d.polygon([(cx-6,43+bob+legA),(cx-9,42+bob+legA),(cx-6,45+bob+legA)], fill=acc)
+        d.polygon([(cx+6,43+bob+legB),(cx+9,42+bob+legB),(cx+6,45+bob+legB)], fill=acc)
+    add_outline(img, (26,22,38,190))
+    if flip: img = img.transpose(Image.FLIP_LEFT_RIGHT)
+    return img
+
 # ---------------- enemies ----------------
 E = 48
 def draw_enemy(kind, frame):
@@ -757,6 +843,10 @@ manifest = {
     "heroes": build_heroes(),
     "weapons": build_gear("weapons", WEAPON_LOOK, draw_weapon),
     "armor": build_gear("armor", ARMOR_LOOK, draw_armor),
+    "helmets": build_gear("helmets", HELMET_LOOK, draw_helmet),
+    "shields": build_gear("shields", SHIELD_LOOK, draw_shield),
+    "legs": build_gear("legs", LEGS_LOOK, draw_legs),
+    "boots": build_gear("boots", BOOTS_LOOK, draw_boots),
     "enemies": build_enemies(),
     "items": build_items(),
     "npcs": build_npcs(),
