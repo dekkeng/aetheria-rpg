@@ -122,23 +122,22 @@ UI.bindDialogKeys = function () {
   document.addEventListener("keydown", (e) => {
     if (!UI.dialogOpen()) return;
     const code = e.code;
+    // ยืนยัน/ไปต่อ = ปุ่ม "โต้ตอบ" ที่ตั้งไว้ (หรือ Enter เสมอเพื่อความสะดวก)
+    const confirmKey = Keybind.has("interact", code) || code === "Enter" || code === "NumpadEnter";
+    const prevKey = Keybind.has("up", code) || Keybind.has("left", code);
+    const nextKey = Keybind.has("down", code) || Keybind.has("right", code);
     const c = UI._dlgChoice;
     if (c) {
       const n = c.options.length;
-      if (code === "ArrowUp" || code === "KeyW" || code === "ArrowLeft" || code === "KeyA") {
-        c.sel = (c.sel + n - 1) % n; UI._updateChoiceSel();
-      } else if (code === "ArrowDown" || code === "KeyS" || code === "ArrowRight" || code === "KeyD") {
-        c.sel = (c.sel + 1) % n; UI._updateChoiceSel();
-      } else if ((code === "Enter" || code === "NumpadEnter" || code === "Space") && !e.repeat) {
-        c.confirm(c.sel);
-      } else if (/^Digit[1-9]$/.test(code)) {
+      if (prevKey) { c.sel = (c.sel + n - 1) % n; UI._updateChoiceSel(); }
+      else if (nextKey) { c.sel = (c.sel + 1) % n; UI._updateChoiceSel(); }
+      else if (confirmKey && !e.repeat) { c.confirm(c.sel); }
+      else if (/^Digit[1-9]$/.test(code)) {
         const idx = +code.slice(5) - 1;
         if (idx < n) c.confirm(idx);
       }
     } else if (UI._dlgAdvance) {
-      if ((code === "Enter" || code === "NumpadEnter" || code === "Space") && !e.repeat) {
-        UI._dlgAdvance();
-      }
+      if (confirmKey && !e.repeat) UI._dlgAdvance();
     }
     e.preventDefault();
     e.stopPropagation();   // ไม่ให้ทะลุไปสั่งเดิน/เปิดแชท
@@ -162,7 +161,7 @@ UI.playDialogue = function (lines, done) {
     const portrait = isNarr ? "" : UI.portraitHtml(ln.s);
     const name = isNarr ? "" : `<div class="dlg-name">${ln.s}</div>`;
     layer.innerHTML = `<div class="dlg-box ${isNarr ? "narr" : ""} ${portrait ? "has-portrait" : ""}">
-        ${portrait}${name}<div class="dlg-text">${ln.t}</div><div class="dlg-next">▶ SPACE / แตะ เพื่อไปต่อ</div>
+        ${portrait}${name}<div class="dlg-text">${ln.t}</div><div class="dlg-next">▶ <b class="kc">${Keybind.primaryLabel("interact")}</b> / แตะ เพื่อไปต่อ</div>
       </div>`;
   };
   const advance = () => {
@@ -195,7 +194,7 @@ UI.playChoice = function (prompt, options, big) {
   layer.innerHTML = `<div class="dlg-box choice">
       <div class="dlg-text">${prompt}</div>
       <div class="dlg-choices">${btns}</div>
-      <div class="dlg-next">↑↓ เลือก · SPACE ยืนยัน</div></div>`;
+      <div class="dlg-next"><b class="kc">${Keybind.primaryLabel("up")}</b><b class="kc">${Keybind.primaryLabel("down")}</b> เลือก · <b class="kc">${Keybind.primaryLabel("interact")}</b> ยืนยัน</div></div>`;
   const confirm = (idx) => {
     const o = options[idx];
     layer.classList.remove("open"); layer.onclick = null;

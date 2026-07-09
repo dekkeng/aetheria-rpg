@@ -47,6 +47,17 @@ Keybind.actionFor = function (code) {
   return null;
 };
 
+/* ปุ่ม code นี้ผูกกับ action นี้ไหม */
+Keybind.has = function (action, code) {
+  const b = Keybind.get()[action];
+  return !!b && (b[0] === code || b[1] === code);
+};
+
+/* ป้ายปุ่มหลัก (ช่องแรก) ของ action — สำหรับข้อความแนะนำในเกม */
+Keybind.primaryLabel = function (action) {
+  return Keybind.label(Keybind.get()[action][0]);
+};
+
 /* ตั้งปุ่มช่อง slot (0/1) ของ action — ถอดปุ่มซ้ำจากที่อื่นก่อน */
 Keybind.set = function (action, slot, code) {
   if (!State.player) return;

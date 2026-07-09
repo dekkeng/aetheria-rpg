@@ -525,6 +525,13 @@ body {
 .dlg-text { font-size: 15.5px; line-height: 1.7; color: var(--text); min-height: 30px; }
 .dlg-box.narr .dlg-text { font-style: italic; color: #c8c3ee; }
 .dlg-next { position: absolute; right: 16px; bottom: 8px; color: var(--accent2); font-size: 14px; animation: blink 1s infinite; }
+/* คีย์แคปในข้อความแนะนำ (สะท้อนปุ่มที่ตั้งค่า) */
+.dlg-next .kc {
+  display: inline-block; min-width: 18px; padding: 0 5px; margin: 0 1px;
+  font-weight: 700; color: #fff8e0; text-align: center;
+  background: rgba(123,92,255,.28); border: 1px solid var(--accent2);
+  border-radius: 5px; font-size: 13px;
+}
 @keyframes blink { 0%,100% { opacity: .3; } 50% { opacity: 1; } }
 .dlg-box.choice { cursor: default; }
 .dlg-choices { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
