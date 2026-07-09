@@ -1,8 +1,9 @@
 /* ============================================================
  * Aetheria RPG — Isometric Renderer (Phaser 3)
- * วาดโลกแบบ isometric ด้วย art จาก Flare (CC-BY-SA)
- * — เป็น "จอแสดงผล" เท่านั้น: logic เกม (เดิน/ชน/พอร์ทัล/เจอศัตรู)
- *   ยังอยู่ใน world.js เหมือนเดิม โมดูลนี้อ่าน State แล้ววาดตาม
+ * โลก isometric สไตล์ chibi สดใส: พื้นจาก tiles.png (gen_iso_cute.py)
+ * ตัวละคร = สไปรต์ pixel chibi เดิม (heroes/enemies/npcs/pets 4 ทิศ
+ * + เลเยอร์อุปกรณ์ weapons/armor/helmets/shields/legs/boots)
+ * — เป็น "จอแสดงผล" เท่านั้น: logic เกมอยู่ใน world.js เหมือนเดิม
  * ========================================================== */
 
 const Iso = {
@@ -11,6 +12,7 @@ const Iso = {
   ready: false,        // โหลด texture ครบหรือยัง
   builtMap: null,      // id แผนที่ที่สร้าง layer ไว้แล้ว
   TILE_W: 128, TILE_H: 64,
+  CHAR_SCALE: 2.3,     // 48px chibi -> ~110px บนจอ
   t0: performance.now(),
 };
 
@@ -19,60 +21,48 @@ Iso.toScreen = function (gx, gy) {
   return { x: (gx - gy) * (Iso.TILE_W / 2), y: (gx + gy) * (Iso.TILE_H / 2) };
 };
 
-/* ทิศ 8 ทิศของ Flare: 0=W 1=NW 2=N 3=NE 4=E 5=SE 6=S 7=SW
- * จากเวกเตอร์ความเร็วใน grid space (vx=+คือขวา/ตะวันออกของ grid) */
-Iso.dirFromVel = function (vx, vy) {
-  if (!vx && !vy) return null;
-  const sx = vx - vy, sy = vx + vy;              // แปลงเป็นทิศบนจอ
-  const ang = Math.atan2(sy, sx);                // 0=ขวา, +คือลงล่าง
-  const oct = Math.round(ang / (Math.PI / 4));   // -4..4
-  return { "-4": 0, "-3": 1, "-2": 2, "-1": 3, "0": 4, "1": 5, "2": 6, "3": 7, "4": 0 }[oct];
-};
-
 Iso.now = function () { return performance.now() - Iso.t0; };
+
+/* เฟรม idle (หายใจช้า) / เดิน (สลับเร็ว) — จังหวะเดียวกับ sprites.js เดิม */
+Iso.animCol = function (moving, man, phase) {
+  const seq = moving ? (man.walk || [2, 0, 3, 0]) : (man.idle || [0, 1]);
+  const ms = moving ? 130 : 480;
+  return seq[Math.floor(Iso.now() / ms + (phase || 0)) % seq.length];
+};
 
 /* ---------- bootstrap ---------- */
 Iso.init = function () {
-  if (typeof Phaser === "undefined" || typeof FLARE_MANIFEST === "undefined") return;
-  const FM = FLARE_MANIFEST;
-  Iso.FM = FM;
-  Iso.TILE_W = FM.tiles.tileW; Iso.TILE_H = FM.tiles.tileH;
+  if (typeof Phaser === "undefined" || typeof FLARE_MANIFEST === "undefined"
+    || typeof SPRITE_MANIFEST === "undefined") return;
+  Iso.FM = FLARE_MANIFEST;       // ใช้เฉพาะส่วน tiles
+  Iso.SM = SPRITE_MANIFEST;      // ตัวละคร chibi
+  Iso.TILE_W = Iso.FM.tiles.tileW; Iso.TILE_H = Iso.FM.tiles.tileH;
 
   class WorldScene extends Phaser.Scene {
     preload() {
-      const hc = FM.heroCell;
-      const base = "assets/sprites/flare/";
-      Object.keys(FM.heroes).forEach((cls) =>
-        this.load.spritesheet("hero_" + cls, base + FM.heroes[cls].file,
-          { frameWidth: hc.w, frameHeight: hc.h }));
-      Object.keys(FM.gear).forEach((g) =>
-        this.load.spritesheet("gear_" + g, base + FM.gear[g].file,
-          { frameWidth: hc.w, frameHeight: hc.h }));
-      Object.keys(FM.enemies).forEach((e) => {
-        const m = FM.enemies[e];
-        this.load.spritesheet("enemy_" + e, base + m.file,
-          { frameWidth: m.w, frameHeight: m.h });
-      });
-      Object.keys(FM.npcs).forEach((n) => {
-        const m = FM.npcs[n];
-        this.load.spritesheet("npc_" + n, base + m.file,
-          { frameWidth: m.w, frameHeight: m.h });
-      });
-      this.load.image("tiles_atlas", base + FM.tiles.file);
+      const SM = Iso.SM;
+      const sheet = (key, file, cell) =>
+        this.load.spritesheet(key, "assets/sprites/" + file + ".png",
+          { frameWidth: cell, frameHeight: cell });
+      sheet("sh_heroes", "heroes", SM.heroes.cell);
+      ["weapons", "armor", "helmets", "shields", "legs", "boots"].forEach(
+        (k) => sheet("sh_" + k, k, SM[k].cell));
+      sheet("sh_enemies", "enemies", SM.enemies.cell);
+      sheet("sh_npcs", "npcs", SM.npcs.cell);
+      sheet("sh_pets", "pets", SM.pets.cell);
+      this.load.image("tiles_atlas", "assets/sprites/flare/" + Iso.FM.tiles.file);
     }
     create() {
       // ตัดเฟรมทายล์จาก atlas ตาม manifest
       const tex = this.textures.get("tiles_atlas");
-      Object.keys(FM.tiles.map).forEach((kind) => {
-        FM.tiles.map[kind].forEach((e, i) => {
+      Object.keys(Iso.FM.tiles.map).forEach((kind) => {
+        Iso.FM.tiles.map[kind].forEach((e, i) => {
           tex.add(kind + ":" + i, 0, e.x, e.y, e.w, e.h);
         });
       });
       Iso.scene = this;
       Iso.ready = true;
-      Iso.layers = {
-        floor: this.add.group(),
-      };
+      Iso.layers = { floor: this.add.group() };
       Iso.ent = { npcs: new Map(), others: new Map(), portals: [], objects: [] };
       Iso.playerGroup = null;
       Iso.petSprite = null;
@@ -85,8 +75,7 @@ Iso.init = function () {
     }
   }
 
-  // Renderer: ใช้ Canvas2D เป็นหลัก — art เป็นภาพ pre-rendered ไม่ต้องใช้ shader
-  // และเลี่ยงปัญหา WebGL ใน webview/แท็บพื้นหลัง (?rnd=webgl ไว้ทดลอง)
+  // Renderer: Canvas2D — art เป็น pixel ทั้งหมด และเลี่ยงปัญหา WebGL ใน webview
   const rnd = new URLSearchParams(location.search).get("rnd");
   const rtype = rnd === "webgl" ? Phaser.WEBGL : Phaser.CANVAS;
   Iso.game = new Phaser.Game({
@@ -95,13 +84,12 @@ Iso.init = function () {
     scale: { mode: Phaser.Scale.RESIZE, width: "100%", height: "100%" },
     transparent: true,               // ให้เห็นพื้นหลังโทนโซน (Art.applyZoneMood)
     scene: WorldScene,
-    render: { antialias: true, pixelArt: false },
+    render: { pixelArt: true },      // ขยายพิกเซลคม ไม่เบลอ
     audio: { noAudio: true },
     banner: false,
-    // แท็บที่เริ่มแบบ hidden (เช่นตัวทดสอบอัตโนมัติ): rAF ไม่เดิน — ใช้ setTimeout แทน
     fps: { forceSetTimeOut: document.hidden, target: 60 },
   });
-  // Watchdog: บูตในแท็บ hidden (เช่นตัวทดสอบอัตโนมัติ) TextureManager
+  // Watchdog: บูตในแท็บ hidden (ตัวทดสอบอัตโนมัติ) TextureManager
   // อาจไม่ยิง ready เพราะ browser หน่วง decode ภาพ — ดันบูตต่อเอง
   setTimeout(() => {
     const g = Iso.game;
@@ -123,7 +111,6 @@ Iso.onShow = function () {
 /* ---------- อัปเดตต่อเฟรม ---------- */
 Iso.tick = function (dt) {
   if (!Iso.ready || State.screen !== "world" || !State.player) return;
-  // logic เดิมทั้งหมดอยู่ใน World.update
   if (typeof World !== "undefined") {
     if (!World.locked) World.update(dt);
   }
@@ -139,14 +126,6 @@ Iso.tick = function (dt) {
   const map = GameData.maps[p.map];
   if (mn && map && mn.textContent !== map.name) mn.textContent = map.name;
   if (typeof Minimap !== "undefined") Minimap.tick();
-};
-
-/* เฟรม index ใน sheet: row=dir, col=sec.start + เฟรมตามเวลา */
-Iso.frameFor = function (meta, sec, dir, phase) {
-  const s = meta.secs[sec] || meta.secs.stance;
-  const a = Iso.FM.anims[sec === "run" ? "run" : "stance"];
-  const f = Math.floor(Iso.now() / (a.ms / s.frames) + (phase || 0)) % s.frames;
-  return dir * meta.cols + s.start + f;
 };
 
 /* ---------- สร้าง layer แผนที่ (ครั้งเดียวต่อแมพ) ---------- */
@@ -207,7 +186,7 @@ Iso.buildMap = function () {
       }
       if (isObject) {
         const h = (((c * 40503) ^ (r * 24593)) >>> 0);
-        // กำแพง: สลับหิน/ตอไม้แห้ง/พุ่ม แทนหน้าผา (หน้าผา Flare ออกแบบมาต่อแนว)
+        // กำแพง: สลับหิน/ตอไม้แห้ง/พุ่ม แทนกำแพงทึบ (ดูเป็นแนวธรรมชาติ)
         const okind = (kind === "tree")
           ? (h % 5 === 0 ? "pine" : "tree")
           : ["rock", "rock", "deadtree", "bush"][h % 4];
@@ -226,10 +205,10 @@ Iso.buildMap = function () {
   // พอร์ทัล: วงแหวนเรืองแสง (ล็อก = วงเดียวกันแต่หรี่เทา ไม่กะพริบ)
   (map.portals || []).forEach((pt) => {
     const pos = Iso.toScreen(pt.x + 0.5, pt.y + 0.5);
-    const e = Iso.FM.tiles.map.portal[0];
-    const img = sc.add.image(pos.x - e.ox + e.w / 2, pos.y - e.oy + e.h / 2, "tiles_atlas", "portal:0");
+    const kind = pt.lock ? "shrine" : "portal";
+    const e = Iso.FM.tiles.map[kind][0];
+    const img = sc.add.image(pos.x - e.ox + e.w / 2, pos.y - e.oy + e.h / 2, "tiles_atlas", kind + ":0");
     img.setDepth(pt.x + pt.y + 0.5);
-    if (pt.lock) { img.setTint(0x9090a8); img.setAlpha(0.8); }
     img._pulse = !pt.lock;
     Iso.ent.portals.push(img);
   });
@@ -252,58 +231,74 @@ Iso.applyZoom = function () {
   sc.cameras.main.setZoom(z);
 };
 
-/* ---------- ผู้เล่น (ฐาน + เลเยอร์อุปกรณ์) ---------- */
-Iso.GEAR_ORDER = ["legs", "boots", "body", "hand_r", "hand_l", "head"];
-Iso.gearTexture = function (itemId) {
-  if (!itemId || !Iso.FM.gear[itemId]) return null;
-  return "gear_" + itemId;
+/* ---------- ฮีโร่ chibi + เลเยอร์อุปกรณ์ ----------
+ * slot -> sheet: hand_r=weapons hand_l=shields body=armor head=helmets */
+Iso.GEAR = [
+  ["legs", "legs"], ["boots", "boots"], ["body", "armor"],
+  ["hand_r", "weapons"], ["hand_l", "shields"], ["head", "helmets"],
+];
+
+Iso.heroFrame = function (cls, dir, col) {
+  const H = Iso.SM.heroes;
+  const row = H.rows[cls + "_" + dir];
+  if (row === undefined) return 0;
+  return row * H.frames + col;
+};
+Iso.gearFrame = function (sheet, itemId, dir, col) {
+  const G = Iso.SM[sheet];
+  const row = G.rows[itemId + "_" + dir];
+  if (row === undefined) return null;
+  return row * G.frames + col;
 };
 
 Iso.makeHeroGroup = function (cls, equip) {
   const sc = Iso.scene;
-  const hc = Iso.FM.heroCell;
   const cont = sc.add.container(0, 0);
   const mk = (key) => {
     const s = sc.add.sprite(0, 0, key, 0);
-    s.setOrigin(hc.rootX / hc.w, hc.rootY / hc.h);
+    s.setOrigin(0.5, 0.93);                       // เท้าอยู่ล่างเซลล์
+    s.setScale(Iso.CHAR_SCALE);
     cont.add(s);
     return s;
   };
-  cont._base = mk("hero_" + (Iso.FM.heroes[cls] ? cls : "warrior"));
+  cont._base = mk("sh_heroes");
   cont._gear = {};
-  Iso.GEAR_ORDER.forEach((slot) => {
-    const tkey = Iso.gearTexture(equip && equip[slot]);
-    cont._gear[slot] = tkey ? mk(tkey) : null;
+  Iso.GEAR.forEach(([slot, sheet]) => {
+    cont._gear[slot] = (equip && equip[slot]) ? mk("sh_" + sheet) : null;
   });
   cont._equipSig = JSON.stringify(equip || {});
   cont._cls = cls;
   return cont;
 };
 
-Iso.setHeroFrame = function (cont, sec, dir) {
-  const hc = Iso.FM.heroCell;
-  const f = Iso.frameFor(hc, sec, dir, 0);
-  cont._base.setFrame(f);
-  Iso.GEAR_ORDER.forEach((slot) => { if (cont._gear[slot]) cont._gear[slot].setFrame(f); });
+/* ตั้งเฟรมฮีโร่+อุปกรณ์ตามทิศ/การเดิน (เลเยอร์ไหนไม่มีภาพ -> ซ่อน) */
+Iso.setHeroFrame = function (cont, cls, dir, moving, equip, phase) {
+  const col = Iso.animCol(moving, Iso.SM.heroes, phase);
+  cont._base.setFrame(Iso.heroFrame(cls, dir, col));
+  const eq = equip || {};
+  Iso.GEAR.forEach(([slot, sheet]) => {
+    const s = cont._gear[slot];
+    if (!s) return;
+    const f = eq[slot] ? Iso.gearFrame(sheet, eq[slot], dir, col) : null;
+    if (f === null) { s.setVisible(false); return; }
+    s.setVisible(true);
+    s.setFrame(f);
+  });
 };
 
-/* อัปเดตเลเยอร์อุปกรณ์เมื่อสวม/ถอด */
+/* อัปเดตเลเยอร์อุปกรณ์เมื่อสวม/ถอด/เปลี่ยนอาชีพ */
 Iso.refreshHeroGear = function (cont, cls, equip) {
   const sig = JSON.stringify(equip || {});
   if (cont._equipSig === sig && cont._cls === cls) return cont;
   const sc = Iso.scene;
-  const hc = Iso.FM.heroCell;
-  if (cont._cls !== cls) {
-    cont._base.setTexture("hero_" + (Iso.FM.heroes[cls] ? cls : "warrior"));
-    cont._cls = cls;
-  }
-  Iso.GEAR_ORDER.forEach((slot) => {
-    const tkey = Iso.gearTexture(equip && equip[slot]);
-    const cur = cont._gear[slot];
-    if (cur && (!tkey || cur.texture.key !== tkey)) { cur.destroy(); cont._gear[slot] = null; }
-    if (tkey && !cont._gear[slot]) {
-      const s = sc.add.sprite(0, 0, tkey, 0);
-      s.setOrigin(hc.rootX / hc.w, hc.rootY / hc.h);
+  cont._cls = cls;
+  Iso.GEAR.forEach(([slot, sheet]) => {
+    const has = equip && equip[slot];
+    if (cont._gear[slot] && !has) { cont._gear[slot].destroy(); cont._gear[slot] = null; }
+    if (has && !cont._gear[slot]) {
+      const s = sc.add.sprite(0, 0, "sh_" + sheet, 0);
+      s.setOrigin(0.5, 0.93);
+      s.setScale(Iso.CHAR_SCALE);
       cont.add(s);
       cont._gear[slot] = s;
     }
@@ -312,16 +307,13 @@ Iso.refreshHeroGear = function (cont, cls, equip) {
   return cont;
 };
 
-Iso.playerDir = 6;   // เริ่มหันหน้าเข้ากล้อง (S)
 Iso.syncPlayer = function (dt) {
   const p = State.player;
   World.ensurePos(p);
   if (!Iso.playerGroup) Iso.playerGroup = Iso.makeHeroGroup(p.classId, p.equip);
   const g = Iso.refreshHeroGear(Iso.playerGroup, p.classId, p.equip);
-  const d = World.movingNow ? Iso.dirFromVel(World.velX || 0, World.velY || 0) : null;
-  if (d !== null) Iso.playerDir = d;
   const moving = World.movingNow && !World.locked;
-  Iso.setHeroFrame(g, moving ? "run" : "stance", Iso.playerDir);
+  Iso.setHeroFrame(g, p.classId, World.facing || "down", moving, p.equip, 0);
   const pos = Iso.toScreen(p.fx, p.fy);
   g.setPosition(pos.x, pos.y);
   g.setDepth(1000 + (p.fx + p.fy) * 10);
@@ -330,6 +322,8 @@ Iso.syncPlayer = function (dt) {
 };
 
 /* ---------- NPC + บอสบนแมพ ---------- */
+Iso.charTopY = function () { return Iso.SM.heroes.cell * Iso.CHAR_SCALE * 0.93; };
+
 Iso.syncNpcs = function () {
   const sc = Iso.scene;
   const map = GameData.maps[State.player.map];
@@ -338,17 +332,18 @@ Iso.syncNpcs = function () {
     let ent = Iso.ent.npcs.get(key);
     if (!ent) {
       const cont = sc.add.container(0, 0);
-      let meta, tkey;
-      if (npc.boss && Iso.FM.enemies[npc.boss]) {
-        meta = Iso.FM.enemies[npc.boss]; tkey = "enemy_" + npc.boss;
-      } else if (Iso.FM.npcs[npc.id]) {
-        meta = Iso.FM.npcs[npc.id]; tkey = "npc_" + npc.id;
+      let sheet, man, row, scale = Iso.CHAR_SCALE;
+      if (npc.boss && Iso.SM.enemies.rows[Iso.enemyKind(npc.boss)] !== undefined) {
+        sheet = "sh_enemies"; man = Iso.SM.enemies; row = Iso.SM.enemies.rows[Iso.enemyKind(npc.boss)];
+        scale = Iso.CHAR_SCALE * 1.25;
+      } else if (Iso.SM.npcs.rows[npc.id] !== undefined) {
+        sheet = "sh_npcs"; man = Iso.SM.npcs; row = Iso.SM.npcs.rows[npc.id];
       } else {
-        meta = Iso.FM.npcs.elder; tkey = "npc_elder";
+        sheet = "sh_npcs"; man = Iso.SM.npcs; row = 0;
       }
-      const s = sc.add.sprite(0, 0, tkey, 0);
-      s.setOrigin(meta.rootX / meta.w, meta.rootY / meta.h);
-      if (npc.boss) s.setScale(1.15);
+      const s = sc.add.sprite(0, 0, sheet, row * man.frames);
+      s.setOrigin(0.5, 0.93);
+      s.setScale(scale);
       cont.add(s);
       const mark = sc.add.text(0, 0, "", {
         fontFamily: "Kanit, sans-serif", fontSize: "26px", fontStyle: "700",
@@ -358,22 +353,26 @@ Iso.syncNpcs = function () {
       const pos = Iso.toScreen(npc.x + 0.5, npc.y + 0.5);
       cont.setPosition(pos.x, pos.y);
       cont.setDepth(1000 + (npc.x + npc.y + 1) * 10);
-      ent = { root: cont, spr: s, mark, meta, npc, phase: (npc.x * 7 + npc.y * 13) % 4 };
+      ent = { root: cont, spr: s, mark, man, row, npc, phase: (npc.x * 7 + npc.y * 13) % 4 };
       Iso.ent.npcs.set(key, ent);
       ent.destroy = () => cont.destroy();
     }
     // เฟรมหายใจ + เครื่องหมายเควส
-    ent.spr.setFrame(Iso.frameFor(ent.meta, "stance", 6, ent.phase));
+    ent.spr.setFrame(ent.row * ent.man.frames + Iso.animCol(false, ent.man, ent.phase));
     const m = Iso.npcMark(npc);
     if (m) {
       ent.mark.setText(m.mark);
       ent.mark.setColor(m.color);
       const bob = Math.sin(Iso.now() / 300) * 4;
-      const h = ent.meta.rootY;
-      ent.mark.setY(-h - 6 + bob);
+      ent.mark.setY(-Iso.charTopY() - 4 + bob);
       ent.mark.setVisible(true);
     } else ent.mark.setVisible(false);
   });
+};
+
+Iso.enemyKind = function (enemyId) {
+  const en = GameData.enemies[enemyId];
+  return (en && en.spr) ? en.spr : enemyId;
 };
 
 Iso.npcMark = function (npc) {
@@ -399,29 +398,32 @@ Iso.syncOthers = function (dt) {
     let ent = Iso.ent.others.get(o.id);
     if (!ent) {
       const cont = Iso.makeHeroGroup(o.cls || "warrior", Iso.netEquip(o));
-      const label = sc.add.text(0, -Iso.FM.heroCell.rootY - 4, o.name || "?", {
+      const label = sc.add.text(0, -Iso.charTopY() - 2, o.name || "?", {
         fontFamily: "Kanit, sans-serif", fontSize: "15px", fontStyle: "600",
         color: "#c9bfff", backgroundColor: "rgba(10,9,22,0.72)", padding: { x: 6, y: 2 },
       }).setOrigin(0.5, 1);
       cont.add(label);
       const start = Iso.toScreen(o.x + 0.5, o.y + 0.5);
-      ent = { root: cont, label, dx: o.x + 0.5, dy: o.y + 0.5, dir: 6, lastX: o.x, lastY: o.y };
+      ent = { root: cont, label, dx: o.x + 0.5, dy: o.y + 0.5, dir: "down", lastX: o.x, lastY: o.y };
       cont.setPosition(start.x, start.y);
       Iso.ent.others.set(o.id, ent);
       ent.destroy = () => cont.destroy();
     }
     Iso.refreshHeroGear(ent.root, o.cls || "warrior", Iso.netEquip(o));
-    // lerp ตำแหน่ง + หันตามการเคลื่อนที่
+    // lerp ตำแหน่ง + หันตามการเคลื่อนที่ (แกนจอเด่นสุด)
     const tx = o.x + 0.5, ty = o.y + 0.5;
     if (o.x !== ent.lastX || o.y !== ent.lastY) {
-      const d = Iso.dirFromVel(o.x - ent.lastX, o.y - ent.lastY);
-      if (d !== null) ent.dir = d;
+      const sdx = (o.x - ent.lastX) - (o.y - ent.lastY);
+      const sdy = (o.x - ent.lastX) + (o.y - ent.lastY);
+      ent.dir = Math.abs(sdx) * 2 >= Math.abs(sdy)
+        ? (sdx > 0 ? "right" : "left")
+        : (sdy > 0 ? "down" : "up");
       ent.lastX = o.x; ent.lastY = o.y;
     }
     const k = Math.min(1, dt / 140);
     ent.dx += (tx - ent.dx) * k; ent.dy += (ty - ent.dy) * k;
     const moving = Math.abs(tx - ent.dx) + Math.abs(ty - ent.dy) > 0.05;
-    Iso.setHeroFrame(ent.root, moving ? "run" : "stance", ent.dir);
+    Iso.setHeroFrame(ent.root, o.cls || "warrior", ent.dir, moving, Iso.netEquip(o), 1);
     const pos = Iso.toScreen(ent.dx, ent.dy);
     ent.root.setPosition(pos.x, pos.y);
     ent.root.setDepth(1000 + (ent.dx + ent.dy) * 10);
@@ -442,18 +444,18 @@ Iso.syncPet = function () {
     if (Iso.petSprite) { Iso.petSprite.destroy(); Iso.petSprite = null; }
     return;
   }
-  const eid = Iso.FM.pets[pet.species] || "slime";
-  const meta = Iso.FM.enemies[eid];
-  if (!meta) return;
-  if (!Iso.petSprite || Iso.petSprite._eid !== eid) {
+  const P = Iso.SM.pets;
+  const row = P.rows[pet.species];
+  if (row === undefined) return;
+  if (!Iso.petSprite || Iso.petSprite._species !== pet.species) {
     if (Iso.petSprite) Iso.petSprite.destroy();
-    const s = Iso.scene.add.sprite(0, 0, "enemy_" + eid, 0);
-    s.setOrigin(meta.rootX / meta.w, meta.rootY / meta.h);
-    s.setScale(0.45);
-    s._eid = eid;
+    const s = Iso.scene.add.sprite(0, 0, "sh_pets", row * P.frames);
+    s.setOrigin(0.5, 0.9);
+    s.setScale(Iso.CHAR_SCALE * 1.6);              // เซลล์ 16px -> ~38px
+    s._species = pet.species;
     Iso.petSprite = s;
   }
-  Iso.petSprite.setFrame(Iso.frameFor(meta, "stance", 6, 1));
+  Iso.petSprite.setFrame(row * P.frames + Iso.animCol(false, P, 1));
   const pos = Iso.toScreen(World.petPos.x, World.petPos.y);
   Iso.petSprite.setPosition(pos.x, pos.y);
   Iso.petSprite.setDepth(1000 + (World.petPos.x + World.petPos.y) * 10 - 1);
@@ -472,10 +474,10 @@ Iso.syncBubbles = function () {
   const p = State.player;
   const jobs = [];
   const mine = Net.bubblesFor(Net.id);
-  if (mine && mine.length) jobs.push({ id: "me", list: mine, gx: p.fx, gy: p.fy, top: Iso.FM.heroCell.rootY });
+  if (mine && mine.length) jobs.push({ id: "me", list: mine, gx: p.fx, gy: p.fy, top: Iso.charTopY() });
   (Net.others || []).forEach((o) => {
     const ob = Net.bubblesFor(o.id);
-    if (ob && ob.length) jobs.push({ id: o.id, list: ob, gx: o.x + 0.5, gy: o.y + 0.5, top: Iso.FM.heroCell.rootY + 26 });
+    if (ob && ob.length) jobs.push({ id: o.id, list: ob, gx: o.x + 0.5, gy: o.y + 0.5, top: Iso.charTopY() + 26 });
   });
 
   const seen = new Set();

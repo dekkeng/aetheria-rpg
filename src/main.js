@@ -96,19 +96,18 @@ Game.esc = function (s) {
   return ("" + s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 };
 
-/* เสียง: ปลดล็อก audio หลังคลิกแรก + ปุ่มเปิด/ปิด */
+/* เสียง: ปลดล็อก audio หลังคลิกแรก (สวิตช์เปิด/ปิดอยู่ในเมนูตั้งค่า) */
 Game.bindSound = function () {
   const unlock = () => { SFX.unlock(); if (typeof Music !== "undefined") Music.autostart(); };
   document.addEventListener("pointerdown", unlock, { once: false });
   document.addEventListener("keydown", unlock, { once: false });
-  const btn = UI.$("#sound-toggle");
-  btn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    const on = SFX.toggle();
-    btn.textContent = on ? "🔊" : "🔈";
-    btn.classList.toggle("off", !on);
-    if (typeof Music !== "undefined") { if (on) { Music.autostart(); SFX.play("select"); } else Music.stop(); }
-  });
+};
+
+/* สลับเสียงเปิด/ปิด (เรียกจากเมนูตั้งค่า) — คืนสถานะใหม่ */
+Game.toggleSound = function () {
+  const on = SFX.toggle();
+  if (typeof Music !== "undefined") { if (on) { Music.autostart(); SFX.play("select"); } else Music.stop(); }
+  return on;
 };
 
 /* ---------- หน้าไตเติล ---------- */
@@ -360,8 +359,7 @@ Game.bindWorld = function () {
       else if (m === "inventory") UI.openInventory();
       else if (m === "quests") UI.openJournal();
       else if (m === "pets") Pets.openMenu();
-      else if (m === "save") Game.saveGame();
-      else if (m === "logout") Game.confirmLogout();
+      else if (m === "settings") UI.openSettings();
     })
   );
 };

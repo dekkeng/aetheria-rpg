@@ -185,6 +185,24 @@ UI.closeOverlay = function () {
   UI.$("#overlay").classList.remove("open");
 };
 
+/* ---------- เมนูตั้งค่าเกม ---------- */
+UI.openSettings = function () {
+  const render = () => {
+    const on = (typeof SFX !== "undefined") ? SFX.enabled : true;
+    UI.openOverlay(`
+      <h2>⚙ ตั้งค่าเกม</h2>
+      <div class="settings-list">
+        <button class="btn wide" id="set-sound">${on ? "🔊 เสียง: เปิดอยู่" : "🔈 เสียง: ปิดอยู่"}</button>
+        <button class="btn wide danger" id="set-logout">🚪 ออกจากระบบ</button>
+      </div>
+      <p class="sub" style="margin-top:14px">💾 เกมบันทึกอัตโนมัติตลอดเวลา ไม่ต้องกดเซฟเอง</p>
+    `);
+    UI.$("#set-sound").addEventListener("click", () => { Game.toggleSound(); render(); });
+    UI.$("#set-logout").addEventListener("click", () => { UI.closeOverlay(); Game.confirmLogout(); });
+  };
+  render();
+};
+
 /* ---------- เมนูตัวละคร ---------- */
 UI.openStats = function () {
   const p = State.player;
