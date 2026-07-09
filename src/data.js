@@ -339,8 +339,8 @@ GameData.maps = {
       clusters: [{ tile: 1, blobs: 16, radius: 2 }, { tile: 2, blobs: 2, radius: 1 }],
       ground: [[0, 0.05]],
       spawn: [16, 2],
-      clear: [[16, 1], [16, 2], [16, 22], [16, 21], [16, 6], [16, 19]],
-      connect: [[16, 1], [16, 22], [16, 21], [16, 6], [16, 19]],
+      clear: [[16, 1], [16, 2], [16, 6], [16, 19], [30, 12], [29, 12]],
+      connect: [[16, 1], [16, 6], [16, 19], [30, 12]],
     }),
     npcs: [
       { id: "isolde", x: 16, y: 6 },
@@ -348,7 +348,7 @@ GameData.maps = {
     ],
     portals: [
       { x: 16, y: 1, to: "field", tx: 16, ty: 21 },
-      { x: 16, y: 22, to: "emberpeak", tx: 16, ty: 2, lock: { flag: "emberpeak_open", level: 9, msg: "ช่องเขาคาซันร้อนระอุ — ต้องได้ตราจากอายาเมะก่อน" } },
+      { x: 30, y: 12, to: "emberpeak", tx: 2, ty: 12, lock: { flag: "emberpeak_open", level: 9, msg: "ช่องเขาคาซันร้อนระอุ — ต้องได้ตราจากอายาเมะก่อน" } },
     ],
     spawn: { x: 16, y: 2 },
   },
@@ -359,19 +359,19 @@ GameData.maps = {
     grid: buildMap({
       W: 32, H: 24, base: 5, border: 6, seed: 44,
       clusters: [{ tile: 9, blobs: 7, radius: 2 }, { tile: 6, blobs: 5, radius: 1 }],
-      spawn: [16, 2],
-      clear: [[16, 1], [16, 2], [16, 22], [16, 21], [16, 6], [16, 19]],
-      connect: [[16, 1], [16, 22], [16, 21], [16, 6], [16, 19]],
+      spawn: [2, 12],
+      clear: [[1, 12], [2, 12], [16, 22], [16, 21], [16, 6], [16, 19]],
+      connect: [[1, 12], [16, 22], [16, 21], [16, 6], [16, 19]],
     }),
     npcs: [
       { id: "grimm", x: 16, y: 6 },
       { id: "ignathor_boss", x: 16, y: 19, boss: "ignathor" },
     ],
     portals: [
-      { x: 16, y: 1, to: "forest", tx: 16, ty: 21 },
+      { x: 1, y: 12, to: "forest", tx: 29, ty: 12 },
       { x: 16, y: 22, to: "mistfen", tx: 16, ty: 2, lock: { flag: "mistfen_open", level: 14, msg: "หมอกพิษบึงยูเรอิหนาแน่น — ต้องมีตะเกียงหมอกจากจิน" } },
     ],
-    spawn: { x: 16, y: 2 },
+    spawn: { x: 2, y: 12 },
   },
 
   mistfen: {
@@ -384,8 +384,8 @@ GameData.maps = {
       clusters: [{ tile: 2, blobs: 13, radius: 2 }, { tile: 1, blobs: 4, radius: 1 }],
       ground: [[0, 0.04]],
       spawn: [16, 2],
-      clear: [[16, 1], [16, 2], [16, 22], [16, 21], [16, 6], [16, 19]],
-      connect: [[16, 1], [16, 22], [16, 21], [16, 6], [16, 19]],
+      clear: [[16, 1], [16, 2], [16, 6], [16, 19], [30, 12], [29, 12]],
+      connect: [[16, 1], [16, 6], [16, 19], [30, 12]],
     }),
     npcs: [
       { id: "maeve", x: 16, y: 6 },
@@ -393,7 +393,7 @@ GameData.maps = {
     ],
     portals: [
       { x: 16, y: 1, to: "emberpeak", tx: 16, ty: 21 },
-      { x: 16, y: 22, to: "frostspire", tx: 16, ty: 2, lock: { flag: "frostspire_open", level: 18, msg: "พายุหิมะปิดทางยอดเขายูกิ — ต้องรู้ความจริงจากอาจารย์เก็นโซก่อน" } },
+      { x: 30, y: 12, to: "frostspire", tx: 2, ty: 12, lock: { flag: "frostspire_open", level: 18, msg: "พายุหิมะปิดทางยอดเขายูกิ — ต้องรู้ความจริงจากอาจารย์เก็นโซก่อน" } },
     ],
     spawn: { x: 16, y: 2 },
   },
@@ -404,19 +404,19 @@ GameData.maps = {
     grid: buildMap({
       W: 32, H: 24, base: 7, border: 6, seed: 66,
       clusters: [{ tile: 8, blobs: 9, radius: 2 }, { tile: 6, blobs: 3, radius: 1 }],
-      spawn: [16, 2],
-      clear: [[16, 1], [16, 2], [16, 22], [16, 21], [16, 6], [16, 19]],
-      connect: [[16, 1], [16, 22], [16, 21], [16, 6], [16, 19]],
+      spawn: [2, 12],
+      clear: [[1, 12], [2, 12], [16, 22], [16, 21], [16, 6], [16, 19]],
+      connect: [[1, 12], [16, 22], [16, 21], [16, 6], [16, 19]],
     }),
     npcs: [
       { id: "nyx", x: 16, y: 6 },
       { id: "nyx_boss", x: 16, y: 19, boss: "nyx_duel" },
     ],
     portals: [
-      { x: 16, y: 1, to: "mistfen", tx: 16, ty: 21 },
+      { x: 1, y: 12, to: "mistfen", tx: 29, ty: 12 },
       { x: 16, y: 22, to: "citadel", tx: 16, ty: 2, lock: { flag: "citadel_open", level: 24, msg: "ประตูปราสาทโอนิปิดสนิท — ต้องรวมเศษกระจกครบทั้งสี่ก่อน" } },
     ],
-    spawn: { x: 16, y: 2 },
+    spawn: { x: 2, y: 12 },
   },
 
   citadel: {
@@ -448,13 +448,13 @@ GameData.maps = {
       clusters: [{ tile: 1, blobs: 18, radius: 2 }],
       ground: [[0, 0.05]],
       spawn: [2, 12],
-      clear: [[1, 12], [2, 12], [16, 1], [16, 2], [10, 8], [24, 16]],
-      connect: [[1, 12], [16, 1], [10, 8], [24, 16]],
+      clear: [[1, 12], [2, 12], [30, 12], [29, 12], [10, 8], [24, 16]],
+      connect: [[1, 12], [30, 12], [10, 8], [24, 16]],
     }),
     npcs: [{ id: "kaede", x: 10, y: 8 }],
     portals: [
       { x: 1, y: 12, to: "town", tx: 29, ty: 12 },
-      { x: 16, y: 1, to: "shrine", tx: 16, ty: 21 },
+      { x: 30, y: 12, to: "shrine", tx: 2, ty: 12 },
     ],
     spawn: { x: 2, y: 12 },
   },
@@ -464,19 +464,19 @@ GameData.maps = {
     encounters: [{ enemy: "cave_moth", weight: 4 }, { enemy: "kodama", weight: 2 }],
     grid: buildMap({
       W: 30, H: 22, base: 0, border: 1, seed: 99,
-      rects: [[12, 4, 17, 8, 6], [6, 12, 9, 14, 6], [20, 12, 23, 14, 6]],
+      rects: [[12, 4, 17, 8, 6], [6, 13, 9, 15, 6], [20, 12, 23, 14, 6]],
       clusters: [{ tile: 1, blobs: 10, radius: 2 }],
       ground: [[4, 0.05]],
-      spawn: [15, 20],
-      clear: [[15, 20], [15, 21], [15, 6], [15, 12], [8, 13], [21, 13]],
-      connect: [[15, 21], [15, 6], [15, 12], [8, 13], [21, 13]],
+      spawn: [2, 11],
+      clear: [[1, 11], [2, 11], [15, 6], [15, 11], [10, 13], [21, 13]],
+      connect: [[1, 11], [15, 6], [15, 11], [10, 13], [21, 13]],
     }),
     npcs: [
-      { id: "inari", x: 8, y: 13 },
+      { id: "inari", x: 10, y: 13 },
       { id: "kitsune_boss", x: 15, y: 6, boss: "kitsune" },
     ],
-    portals: [{ x: 15, y: 21, to: "bamboo", tx: 16, ty: 2 }],
-    spawn: { x: 15, y: 20 },
+    portals: [{ x: 1, y: 11, to: "bamboo", tx: 29, ty: 12 }],
+    spawn: { x: 2, y: 11 },
   },
 
   cave: {

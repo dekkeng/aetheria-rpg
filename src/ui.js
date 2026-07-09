@@ -240,11 +240,14 @@ UI.openJournal = function () {
 
 /* ---------- Overlay กลาง ---------- */
 UI.openOverlay = function (html) {
+  UI.$("#overlay-panel").classList.remove("map-wide");   // ค่าเริ่มต้น: ขนาดปกติ
   UI.$("#overlay-content").innerHTML = html;
   UI.$("#overlay").classList.add("open");
 };
 UI.closeOverlay = function () {
   UI.$("#overlay").classList.remove("open");
+  UI.$("#overlay-panel").classList.remove("map-wide");
+  if (UI._wmResize) { window.removeEventListener("resize", UI._wmResize); UI._wmResize = null; }
 };
 
 /* ---------- แผนที่เต็ม + แผนที่โลก (แตะ minimap) ---------- */
@@ -272,6 +275,8 @@ UI.openMapView = function () {
       </div>
       ${body}
     `);
+    // แผนที่โลกใช้ popup ใหญ่เต็มจอ (zone tab ใช้ขนาดปกติ)
+    UI.$("#overlay-panel").classList.toggle("map-wide", tab === "world");
     UI.$$("[data-mtab]").forEach((b) => b.addEventListener("click", () => { tab = b.dataset.mtab; render(); }));
     if (tab === "zone") {
       const cv = UI.$("#map-full-canvas");
@@ -368,23 +373,23 @@ UI.buildWorldMap = function (holder) {
     if (m && typeof Minimap !== "undefined") Minimap.drawInto(cv, m, 88);
   });
 
-  // ย่อให้พอดีจอ: จอใหญ่พอ = เห็นเต็มไม่ต้อง scroll · จอเล็ก = ย่อไม่ต่ำกว่า MIN แล้ว scroll
+  // ย่อทั้งผังให้พอดีกรอบ popup เสมอ (ทุกขนาดจอ ไม่มี scroll)
   const fitScale = () => {
     const scroll = holder.parentElement;         // .worldmap-scroll
     if (!scroll) return;
-    const availW = scroll.clientWidth - 20;
-    const availH = Math.max(200, window.innerHeight * 0.66);
-    const MIN = 0.5;
-    const fit = Math.min(1, availW / W, availH / H);
-    const scale = Math.max(MIN, fit);
+    const availW = Math.max(120, scroll.clientWidth - 8);
+    const availH = Math.max(120, scroll.clientHeight - 8);
+    const scale = Math.min(1, availW / W, availH / H);
     const canvas = holder.querySelector(".wm-canvas");
     canvas.style.transform = `scale(${scale})`;
-    canvas.style.transformOrigin = "top left";
-    holder.style.width = Math.ceil(W * scale) + "px";
+    canvas.style.transformOrigin = "top center";
+    // ให้ holder สูงเท่าที่ย่อแล้ว + จัดกึ่งกลางแนวตั้งในกรอบ
+    holder.style.width = "100%";
     holder.style.height = Math.ceil(H * scale) + "px";
-    holder.style.margin = "0 auto";
   };
+  // วัดกรอบจริงหลัง layout เสร็จ (2 รอบ กัน clientHeight ยังไม่นิ่ง)
   fitScale();
+  requestAnimationFrame(fitScale);
   // ปรับใหม่เมื่อจอเปลี่ยนขนาด ระหว่างเปิดหน้าต่างแผนที่
   UI._wmResize && window.removeEventListener("resize", UI._wmResize);
   UI._wmResize = () => { if (document.getElementById("worldmap-holder") === holder) fitScale(); };
