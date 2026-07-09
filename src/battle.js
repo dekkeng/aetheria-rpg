@@ -13,6 +13,7 @@ Battle.start = function (enemyId, opts) {
     enemy: {
       id: enemyId,
       name: def.name,
+      lv: def.lv || 1,
       sprite: def.sprite,
       hp: def.hp, maxHp: def.hp,
       atk: def.atk, def: def.def,
@@ -35,8 +36,8 @@ Battle.start = function (enemyId, opts) {
 Battle.render = function () {
   const b = State.battle;
   const p = State.player;
-  UI.$("#enemy-name").textContent = b.enemy.name;
-  UI.$("#battle-hero-name").textContent = p.name;
+  UI.$("#enemy-name").innerHTML = `<span class="mon-lv">Lv.${b.enemy.lv}</span> ${Game.esc ? Game.esc(b.enemy.name) : b.enemy.name}`;
+  UI.$("#battle-hero-name").textContent = `Lv.${p.level} ${p.name}`;
   Battle.drawSprites();
 
   UI.setBar("#enemy-hp-bar", b.enemy.hp, b.enemy.maxHp);
@@ -368,7 +369,7 @@ Battle.openItemMenu = function () {
   const sub = UI.$("#battle-submenu");
   const consumables = p.inventory.filter((s) => {
     const it = GameData.items[s.id];
-    return it && it.type === "consume";
+    return it && it.type === "consume" && !it.warp;   // ไอเทมวาปใช้ในสนามรบไม่ได้
   });
   if (!consumables.length) {
     sub.innerHTML = `<p class="empty">ไม่มีไอเทมใช้ได้</p><button class="btn back" data-item-back>ย้อนกลับ</button>`;

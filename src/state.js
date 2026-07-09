@@ -36,6 +36,7 @@ State.createPlayer = function (name, classId) {
     ],
     equip: State.emptyEquip(),
     quests: {},          // (legacy — ไม่ใช้แล้ว)
+    side: {},            // เควสย่อยหมู่บ้าน: questId -> {state, startKills}
     kills: {},           // enemyId -> count (นับรวม)
     map: "town",
     x: GameData.maps.town.spawn.x,
@@ -187,6 +188,7 @@ State.ensureProgression = function (p) {
   if (p.classId === "mage" && p.level >= 3 && !p.skills.heal_spell) p.skills.heal_spell = 1;
   if (typeof p.statPoints !== "number") p.statPoints = 0;
   if (typeof p.skillPoints !== "number") p.skillPoints = 0;
+  if (!p.side) p.side = {};
   if (!Array.isArray(p.pets)) p.pets = [];
   if (p.activePet === undefined) p.activePet = null;
   // migrate ช่องสวมใส่: จาก {weapon,armor} เดิม -> 11 ช่อง

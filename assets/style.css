@@ -611,6 +611,46 @@ body {
 }
 #save-indicator.show { opacity: 1; transform: scale(1); }
 
+/* หน้าต่างแผนที่เต็ม + แผนที่โลก */
+.map-full-wrap { display: flex; justify-content: center; padding: 8px 0; }
+#map-full-canvas {
+  image-rendering: pixelated; border: 2px solid var(--border); border-radius: 8px;
+  background: #0a0916; max-width: 100%; box-shadow: 0 4px 14px rgba(0,0,0,.4);
+}
+.worldmap-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; max-height: 56vh; overflow-y: auto; }
+.wm-card {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px;
+}
+.wm-card.here { border-color: var(--exp); box-shadow: 0 0 0 1px rgba(110,231,135,.35); }
+.wm-name { font-weight: 600; font-size: 14.5px; }
+.wm-you { color: var(--exp); font-size: 12px; }
+.wm-badge { font-size: 12px; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+.wm-badge.town { color: #ffd76a; background: rgba(255,204,85,.14); border: 1px solid #ffd76a; }
+.wm-badge.wild { color: #ff9a8a; background: rgba(255,84,80,.13); border: 1px solid #ff8a7a; }
+
+/* กระดานเควสย่อย */
+.sq-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.sq-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+  padding: 9px 12px; border-left-width: 4px;
+}
+.sq-row small { color: var(--muted); }
+.sq-stat { font-size: 12px; font-weight: 700; white-space: nowrap; padding: 3px 9px; border-radius: 999px; }
+.sq-new { border-left-color: var(--muted); } .sq-new .sq-stat { color: var(--muted); background: rgba(154,148,196,.15); }
+.sq-active { border-left-color: var(--accent2); } .sq-active .sq-stat { color: var(--accent2); background: rgba(123,92,255,.15); }
+.sq-ready { border-left-color: var(--gold); } .sq-ready .sq-stat { color: var(--gold); background: rgba(255,204,85,.16); }
+.sq-done { border-left-color: var(--exp); } .sq-done .sq-stat { color: var(--exp); background: rgba(110,231,135,.15); }
+
+/* ป้ายเลเวลมอนในฉากต่อสู้ */
+.mon-lv {
+  display: inline-block; font-size: 11px; font-weight: 700;
+  color: #ffdd88; background: rgba(180, 60, 40, .55);
+  border: 1px solid #ff9a6a; border-radius: 6px; padding: 0 6px; margin-right: 4px;
+  vertical-align: middle;
+}
+
 /* รายการปุ่มในเมนูตั้งค่า */
 .settings-list { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
 .set-head { margin: 20px 0 4px; font-size: 15px; color: var(--accent2); }

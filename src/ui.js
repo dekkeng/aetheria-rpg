@@ -247,6 +247,70 @@ UI.closeOverlay = function () {
   UI.$("#overlay").classList.remove("open");
 };
 
+/* ---------- แผนที่เต็ม + แผนที่โลก (แตะ minimap) ---------- */
+UI.openMapView = function () {
+  const p = State.player;
+  if (!p) return;
+  let tab = "zone";
+  const render = () => {
+    const curMap = GameData.maps[p.map];
+    const zoneActive = tab === "zone" ? "act" : "";
+    const worldActive = tab === "world" ? "act" : "";
+    let body;
+    if (tab === "zone") {
+      body = `<div class="map-full-wrap"><canvas id="map-full-canvas"></canvas></div>
+        <p class="sub" style="text-align:center">${curMap.town ? "🏯 เขตปลอดภัย (ไม่มีมอนสเตอร์)" : "⚔️ มีมอนสเตอร์ — ระวังตัว"}</p>`;
+    } else {
+      body = `<div class="worldmap-list">${UI.worldMapHtml()}</div>`;
+    }
+    UI.openOverlay(`
+      <h2>🗺️ แผนที่</h2>
+      <div class="auth-tabs">
+        <button class="btn ${zoneActive}" data-mtab="zone">📍 ${curMap.name}</button>
+        <button class="btn ${worldActive}" data-mtab="world">🌏 แผนที่โลก</button>
+      </div>
+      ${body}
+    `);
+    UI.$$("[data-mtab]").forEach((b) => b.addEventListener("click", () => { tab = b.dataset.mtab; render(); }));
+    if (tab === "zone") {
+      const cv = UI.$("#map-full-canvas");
+      if (cv && typeof Minimap !== "undefined") Minimap.drawInto(cv, curMap, 300);
+    }
+  };
+  render();
+};
+
+/* สร้างการ์ดแผนที่โลก — ไล่ตามกราฟพอร์ทัลจากเมืองเริ่มต้น */
+UI.worldMapHtml = function () {
+  const p = State.player;
+  const order = [], seen = new Set();
+  const walk = (id) => {
+    if (!id || seen.has(id) || !GameData.maps[id]) return;
+    seen.add(id); order.push(id);
+    (GameData.maps[id].portals || []).forEach((pt) => walk(pt.to));
+  };
+  walk("town");
+  Object.keys(GameData.maps).forEach(walk);   // เผื่อแมพที่ไม่ต่อกับเมือง
+  return order.map((id) => {
+    const m = GameData.maps[id];
+    const here = p.map === id;
+    const isTown = !!m.town;
+    const badge = isTown
+      ? `<span class="wm-badge town">🏯 เมือง · ปลอดมอน</span>`
+      : `<span class="wm-badge wild">⚔️ Lv.${UI.zoneLevel(m)} · มีมอน</span>`;
+    return `<div class="wm-card ${here ? "here" : ""}">
+        <div class="wm-name">${m.name}${here ? ' <b class="wm-you">(อยู่นี่)</b>' : ""}</div>
+        ${badge}
+      </div>`;
+  }).join("");
+};
+
+/* ประเมินเลเวลโซนจากมอนที่พบ (ไว้โชว์ในแผนที่โลก) */
+UI.zoneLevel = function (m) {
+  const lvs = (m.encounters || []).map((e) => (GameData.enemies[e.enemy] || {}).lv || 1);
+  return lvs.length ? Math.min.apply(null, lvs) + "–" + Math.max.apply(null, lvs) : "?";
+};
+
 /* ---------- เมนูตั้งค่าเกม ---------- */
 UI.openSettings = function () {
   const render = () => {
@@ -499,6 +563,15 @@ UI.useItem = function (itemId, inBattle) {
   const it = GameData.items[itemId];
   if (!it || it.type !== "consume") return false;
   if (State.countItem(p, itemId) <= 0) return false;
+  // ไอเทมวาป: ใช้ได้เฉพาะนอกสนามรบ
+  if (it.warp) {
+    if (inBattle) { UI.toast("ใช้ตอนสู้ไม่ได้"); return false; }
+    if (GameData.maps[p.map] && GameData.maps[p.map].town) { UI.toast("อยู่ในเมืองอยู่แล้ว"); return false; }
+    State.removeItem(p, itemId, 1);
+    UI.closeOverlay();
+    World.warpToTown();
+    return true;
+  }
   let used = false;
   if (it.heal) { p.hp = Math.min(p.maxHp, p.hp + it.heal); used = true; }
   if (it.mp)   { p.mp = Math.min(p.maxMp, p.mp + it.mp); used = true; }

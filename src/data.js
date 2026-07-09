@@ -10,25 +10,25 @@ const GameData = {};
 GameData.classes = [
   {
     id: "warrior",
-    name: "นักรบ",
+    name: "ซามูไร",
     icon: "⚔️",
-    desc: "พลังโจมตีและ HP สูง เหมาะกับสายบุกตะลุย",
+    desc: "พลังดาบและ HP สูง เหมาะกับสายบุกประจัญบาน",
     base: { maxHp: 60, maxMp: 12, atk: 12, def: 8, spd: 6 },
     skill: "power_strike",
   },
   {
     id: "mage",
-    name: "จอมเวท",
+    name: "อนเมียวจิ",
     icon: "🔮",
-    desc: "เวทมนตร์รุนแรง MP สูง แต่ตัวบาง",
+    desc: "เวทหยินหยางรุนแรง MP สูง แต่ตัวบาง",
     base: { maxHp: 40, maxMp: 30, atk: 7, def: 5, spd: 7 },
     skill: "fireball",
   },
   {
     id: "archer",
-    name: "นักธนู",
+    name: "นินจา",
     icon: "🏹",
-    desc: "คล่องแคล่ว ความเร็วสูง โจมตีแม่นยำ",
+    desc: "คล่องแคล่ว ว่องไว โจมตีแม่นยำจากเงามืด",
     base: { maxHp: 48, maxMp: 18, atk: 10, def: 6, spd: 10 },
     skill: "double_shot",
   },
@@ -60,10 +60,11 @@ GameData.items = {
   hi_potion:   { id: "hi_potion",   name: "ยาฟื้น HP+",  icon: "🍶", type: "consume", heal: 80,  price: 70,  desc: "ฟื้น HP 80" },
   ether:       { id: "ether",       name: "ยาฟื้น MP",   icon: "💧", type: "consume", mp: 25,    price: 40,  desc: "ฟื้น MP 25" },
   antidote:    { id: "antidote",    name: "ยาถอนพิษ",    icon: "🌿", type: "consume", cure: true, price: 15, desc: "รักษาสถานะพิษ" },
+  town_scroll: { id: "town_scroll", name: "โอฟุดะเรียกกลับ", icon: "🎴", type: "consume", warp: "town", price: 60, desc: "ฉีกแล้ววาปกลับหมู่บ้านที่ใกล้ที่สุดทันที" },
 
-  wood_sword:  { id: "wood_sword",  name: "ดาบไม้",      icon: "🗡️", type: "weapon", atk: 4,  price: 30,  desc: "ATK +4" },
-  iron_sword:  { id: "iron_sword",  name: "ดาบเหล็ก",    icon: "⚔️", type: "weapon", atk: 10, price: 120, desc: "ATK +10" },
-  mythril_bow: { id: "mythril_bow", name: "ธนูมิธริล",   icon: "🏹", type: "weapon", atk: 14, price: 220, desc: "ATK +14" },
+  wood_sword:  { id: "wood_sword",  name: "โบคุโต (ดาบไม้)", icon: "🗡️", type: "weapon", atk: 4,  price: 30,  desc: "ATK +4" },
+  iron_sword:  { id: "iron_sword",  name: "คาตานะเหล็ก",  icon: "⚔️", type: "weapon", atk: 10, price: 120, desc: "ATK +10" },
+  mythril_bow: { id: "mythril_bow", name: "ยูมิเงินแท้",  icon: "🏹", type: "weapon", atk: 14, price: 220, desc: "ATK +14" },
 
   leather_armor:{ id: "leather_armor", name: "เกราะหนัง", icon: "🦺", type: "armor", def: 5,  price: 50,  desc: "DEF +5" },
   iron_armor:  { id: "iron_armor",  name: "เกราะเหล็ก",  icon: "🛡️", type: "armor", def: 12, price: 160, desc: "DEF +12" },
@@ -73,10 +74,10 @@ GameData.items = {
   fire_crystal:{ id: "fire_crystal",name: "ผลึกไฟ",      icon: "🔥", type: "material", price: 20, desc: "วัตถุดิบร้อนแรง ดรอปจากภูตไฟ" },
 
   // อาวุธ/เกราะระดับสูง (ดรอปจากบอส/ปลายเกม)
-  flame_blade: { id: "flame_blade", name: "ดาบเปลวเพลิง", icon: "🗡️", type: "weapon", atk: 22, price: 500, desc: "ATK +22 · อบด้วยไฟมังกร" },
-  frost_edge:  { id: "frost_edge",  name: "คมน้ำแข็ง",   icon: "❄️", type: "weapon", atk: 30, price: 800, desc: "ATK +30" },
+  flame_blade: { id: "flame_blade", name: "คาตานะเพลิงคากุ", icon: "🗡️", type: "weapon", atk: 22, price: 500, desc: "ATK +22 · อบด้วยไฟมังกร" },
+  frost_edge:  { id: "frost_edge",  name: "ยูกิ-คิบะ (เขี้ยวหิมะ)", icon: "❄️", type: "weapon", atk: 30, price: 800, desc: "ATK +30" },
   dragon_mail: { id: "dragon_mail", name: "เกราะเกล็ดมังกร", icon: "🐲", type: "armor", def: 20, price: 600, desc: "DEF +20" },
-  aether_robe: { id: "aether_robe", name: "อาภรณ์อีเธอร์", icon: "✨", type: "armor", def: 28, price: 900, desc: "DEF +28" },
+  aether_robe: { id: "aether_robe", name: "อาภรณ์ศักดิ์สิทธิ์", icon: "✨", type: "armor", def: 28, price: 900, desc: "DEF +28" },
 
   // ---- อุปกรณ์สวมใส่ตามช่อง (หัว/มือซ้าย/ขา/เท้า/เครื่องประดับ) ----
   leather_cap:  { id: "leather_cap",  name: "หมวกหนัง",    icon: "🧢", type: "helmet",   slot: "head",     def: 3,  price: 40,  desc: "DEF +3" },
@@ -116,40 +117,40 @@ GameData.items = {
   pet_meat:  { id: "pet_meat",  name: "เนื้อย่างหอม",  icon: "🍖", type: "petfood", petExp: 40,  price: 120, desc: "อาหารสัตว์เลี้ยง +40 EXP" },
   pet_jelly: { id: "pet_jelly", name: "รอยัลเจลลี่",   icon: "🍯", type: "petfood", petExp: 150, price: 350, desc: "อาหารสัตว์เลี้ยงชั้นเลิศ +150 EXP" },
 
-  // เสี้ยวมงกุฎ (ไอเทมเนื้อเรื่อง)
-  shard1: { id: "shard1", name: "เสี้ยวมงกุฎ I",  icon: "🔷", type: "key", price: 0, desc: "เสี้ยวมงกุฎอีเธอร์ — จากป่าธอร์นวูด" },
-  shard2: { id: "shard2", name: "เสี้ยวมงกุฎ II", icon: "🔶", type: "key", price: 0, desc: "เสี้ยวมงกุฎอีเธอร์ — จากโพรงมังกร" },
-  shard3: { id: "shard3", name: "เสี้ยวมงกุฎ III",icon: "🟣", type: "key", price: 0, desc: "เสี้ยวมงกุฎอีเธอร์ — จากบึงมิสท์เฟน" },
-  shard4: { id: "shard4", name: "เสี้ยวมงกุฎ IV", icon: "🟢", type: "key", price: 0, desc: "เสี้ยวมงกุฎอีเธอร์ — จากยอดฟรอสต์สไปร์" },
+  // เศษกระจกยาตะ (ไอเทมเนื้อเรื่อง)
+  shard1: { id: "shard1", name: "เศษกระจกยาตะ I",  icon: "🔷", type: "key", price: 0, desc: "เศษกระจกศักดิ์สิทธิ์ — จากป่าโยไก" },
+  shard2: { id: "shard2", name: "เศษกระจกยาตะ II", icon: "🔶", type: "key", price: 0, desc: "เศษกระจกศักดิ์สิทธิ์ — จากภูเขาไฟคาซัน" },
+  shard3: { id: "shard3", name: "เศษกระจกยาตะ III",icon: "🟣", type: "key", price: 0, desc: "เศษกระจกศักดิ์สิทธิ์ — จากบึงยูเรอิ" },
+  shard4: { id: "shard4", name: "เศษกระจกยาตะ IV", icon: "🟢", type: "key", price: 0, desc: "เศษกระจกศักดิ์สิทธิ์ — จากยอดเขายูกิ" },
 };
 
-/* ---------- มอนสเตอร์ (Enemies) ---------- */
+/* ---------- มอนสเตอร์ (Enemies) — ธีมโยไคญี่ปุ่น ---------- */
 GameData.enemies = {
-  slime:  { id: "slime",  name: "สไลม์",       sprite: "🟢", hp: 22,  atk: 6,  def: 2,  exp: 8,   gold: 6,  drop: { item: "slime_gel", rate: 0.6 } },
-  bat:    { id: "bat",    name: "ค้างคาว",     sprite: "🦇", hp: 18,  atk: 8,  def: 1,  exp: 10,  gold: 8,  drop: null, drop2: { item: "pet_berry", rate: 0.25 } },
-  wolf:   { id: "wolf",   name: "หมาป่า",       sprite: "🐺", hp: 35,  atk: 12, def: 4,  exp: 18,  gold: 14, drop: { item: "wolf_fang", rate: 0.5 }, drop2: { item: "pet_meat", rate: 0.3 } },
-  goblin: { id: "goblin", name: "ก็อบลินจอมโจร", sprite: "👺", hp: 110, atk: 26, def: 13, exp: 55, gold: 60, drop: { item: "hi_potion", rate: 0.4 }, drop2: { item: "iron_sword", rate: 0.1 } },
-  golem:  { id: "golem",  name: "โกเลมหิน",     sprite: "🗿", hp: 90,  atk: 20, def: 14, exp: 55,  gold: 60, drop: { item: "iron_armor", rate: 0.15 } },
-  drake:  { id: "drake",  name: "เดรกไฟ",       sprite: "🐉", hp: 160, atk: 30, def: 12, exp: 120, gold: 150, boss: true, drop: { item: "mythril_bow", rate: 1.0 } },
+  slime:  { id: "slime",  name: "สไลม์โคลน",   sprite: "🟢", lv: 1,  hp: 22,  atk: 6,  def: 2,  exp: 8,   gold: 6,  drop: { item: "slime_gel", rate: 0.6 } },
+  bat:    { id: "bat",    name: "เมทสึไอ (ตาลอย)", sprite: "🦇", lv: 2, hp: 18,  atk: 8,  def: 1,  exp: 10,  gold: 8,  drop: null, drop2: { item: "pet_berry", rate: 0.25 } },
+  wolf:   { id: "wolf",   name: "อินุงามิ",     sprite: "🐺", lv: 3,  hp: 35,  atk: 12, def: 4,  exp: 18,  gold: 14, drop: { item: "wolf_fang", rate: 0.5 }, drop2: { item: "pet_meat", rate: 0.3 } },
+  goblin: { id: "goblin", name: "คัปปะจอมโจร",  sprite: "👺", lv: 8,  hp: 110, atk: 26, def: 13, exp: 55, gold: 60, drop: { item: "hi_potion", rate: 0.4 }, drop2: { item: "iron_sword", rate: 0.1 } },
+  golem:  { id: "golem",  name: "ยักษ์ตาเดียว", sprite: "🗿", lv: 7,  hp: 90,  atk: 20, def: 14, exp: 55,  gold: 60, drop: { item: "iron_armor", rate: 0.15 } },
+  drake:  { id: "drake",  name: "มังกรเพลิง",   sprite: "🐉", lv: 12, hp: 160, atk: 30, def: 12, exp: 120, gold: 150, boss: true, drop: { item: "mythril_bow", rate: 1.0 } },
 
   // ---- มอนสเตอร์เนื้อเรื่อง (สเตตัสไล่ระดับตามองก์) ----
-  goblin_chief: { id: "goblin_chief", name: "หัวหน้าก็อบลิน", sprite: "👺", spr: "goblin", hp: 120, atk: 18, def: 8, exp: 60, gold: 80, boss: true, drop: { item: "iron_sword", rate: 1.0 }, book: "book_guard_break", petEgg: { item: "egg_rare", rate: 0.5 } },
-  dire_wolf:   { id: "dire_wolf",   name: "หมาป่าอมตะ",   sprite: "🐺", spr: "wolf", hp: 60,  atk: 18, def: 6,  exp: 24, gold: 18, drop: { item: "wolf_fang", rate: 0.5 }, drop2: { item: "pet_meat", rate: 0.35 } },
-  treant:      { id: "treant",      name: "ทรีนต์ผุ",     sprite: "🌳", hp: 75,  atk: 20, def: 10, exp: 30, gold: 20, drop: null },
-  bramblewrath:{ id: "bramblewrath",name: "แบรมเบิลราธเฒ่า", sprite: "🌲", hp: 260, atk: 26, def: 12, exp: 220, gold: 180, boss: true, drop: { item: "leather_armor", rate: 1.0 }, book: "book_multi_slash", petEgg: { item: "egg_rare", rate: 0.6 } },
-  fire_imp:    { id: "fire_imp",    name: "ภูตไฟ",        sprite: "🔥", hp: 70,  atk: 24, def: 8,  exp: 34, gold: 24, drop: { item: "fire_crystal", rate: 0.7 } },
-  magma_golem: { id: "magma_golem", name: "โกเลมลาวา",    sprite: "🪨", spr: "golem", hp: 140, atk: 30, def: 18, exp: 60, gold: 50, drop: { item: "fire_crystal", rate: 0.5 } },
-  ignathor:    { id: "ignathor",    name: "อิกนาธอร์",     sprite: "🐲", spr: "drake", hp: 420, atk: 38, def: 16, exp: 380, gold: 300, boss: true, drop: { item: "flame_blade", rate: 1.0 }, book: "book_ice_lance", petEgg: { item: "egg_epic", rate: 0.5 } },
-  bog_lurker:  { id: "bog_lurker",  name: "อสูรหนอง",     sprite: "🐊", hp: 110, atk: 34, def: 12, exp: 48, gold: 34, drop: null },
-  will_o_wisp: { id: "will_o_wisp", name: "แสงหลอน",      sprite: "🟡", spr: "bat", hp: 80,  atk: 40, def: 6,  exp: 52, gold: 40, drop: null },
-  bog_horror:  { id: "bog_horror",  name: "อสูรบึงเน่า",   sprite: "🦑", hp: 620, atk: 46, def: 18, exp: 620, gold: 450, boss: true, drop: { item: "dragon_mail", rate: 1.0 }, book: "book_life_drain", petEgg: { item: "egg_epic", rate: 0.5 } },
-  frost_wraith:{ id: "frost_wraith",name: "วิญญาณเหน็บ",  sprite: "👻", spr: "bat", hp: 120, atk: 44, def: 12, exp: 66, gold: 46, drop: null },
-  ice_golem:   { id: "ice_golem",   name: "โกเลมน้ำแข็ง",  sprite: "🧊", spr: "golem", hp: 220, atk: 48, def: 26, exp: 90, gold: 70, drop: { item: "frost_edge", rate: 0.2 } },
-  nyx_duel:    { id: "nyx_duel",    name: "นิกซ์",         sprite: "🥷", hp: 780, atk: 54, def: 22, exp: 900, gold: 600, boss: true, drop: { item: "frost_edge", rate: 1.0 }, book: "book_arrow_rain", petEgg: { item: "egg_epic", rate: 1.0 } },
-  ashen_knight:{ id: "ashen_knight",name: "อัศวินเถ้า",   sprite: "⚔️", hp: 200, atk: 56, def: 30, exp: 100, gold: 80, drop: null },
-  wraith:      { id: "wraith",      name: "ภูตวิญญาณ",    sprite: "👻", spr: "bat", hp: 160, atk: 60, def: 16, exp: 110, gold: 90, drop: null },
-  vheron:      { id: "vheron",      name: "วีรอน ราชันเถ้าธุลี", sprite: "👑", hp: 1200, atk: 68, def: 30, exp: 1500, gold: 1000, boss: true, drop: { item: "aether_robe", rate: 1.0 }, book: "book_thunderbolt", petEgg: { item: "egg_legend", rate: 0.5 } },
-  the_hollow:  { id: "the_hollow",  name: "ความว่างเปล่า", sprite: "⚫", hp: 1800, atk: 76, def: 34, exp: 3000, gold: 1500, boss: true, drop: null, book: "book_meteor", petEgg: { item: "egg_legend", rate: 1.0 } },
+  goblin_chief: { id: "goblin_chief", name: "คัปปะจ่าฝูง",  sprite: "👺", spr: "goblin", lv: 5,  hp: 120, atk: 18, def: 8, exp: 60, gold: 80, boss: true, drop: { item: "iron_sword", rate: 1.0 }, book: "book_guard_break", petEgg: { item: "egg_rare", rate: 0.5 } },
+  dire_wolf:   { id: "dire_wolf",   name: "อินุงามิดุร้าย", sprite: "🐺", spr: "wolf", lv: 6,  hp: 60,  atk: 18, def: 6,  exp: 24, gold: 18, drop: { item: "wolf_fang", rate: 0.5 }, drop2: { item: "pet_meat", rate: 0.35 } },
+  treant:      { id: "treant",      name: "โคดามะผุ",     sprite: "🌳", lv: 7,  hp: 75,  atk: 20, def: 10, exp: 30, gold: 20, drop: null },
+  bramblewrath:{ id: "bramblewrath",name: "ทานุกิยักษ์เฒ่า", sprite: "🦝", lv: 9, hp: 260, atk: 26, def: 12, exp: 220, gold: 180, boss: true, drop: { item: "leather_armor", rate: 1.0 }, book: "book_multi_slash", petEgg: { item: "egg_rare", rate: 0.6 } },
+  fire_imp:    { id: "fire_imp",    name: "โอนิบิ (ภูตไฟ)", sprite: "🔥", lv: 10, hp: 70,  atk: 24, def: 8,  exp: 34, gold: 24, drop: { item: "fire_crystal", rate: 0.7 } },
+  magma_golem: { id: "magma_golem", name: "ยักษ์ลาวา",     sprite: "🪨", spr: "golem", lv: 11, hp: 140, atk: 30, def: 18, exp: 60, gold: 50, drop: { item: "fire_crystal", rate: 0.5 } },
+  ignathor:    { id: "ignathor",    name: "คากุ-ริว มังกรเพลิง", sprite: "🐲", spr: "drake", lv: 14, hp: 420, atk: 38, def: 16, exp: 380, gold: 300, boss: true, drop: { item: "flame_blade", rate: 1.0 }, book: "book_ice_lance", petEgg: { item: "egg_epic", rate: 0.5 } },
+  bog_lurker:  { id: "bog_lurker",  name: "คัปปะบึงเน่า",  sprite: "🐊", lv: 15, hp: 110, atk: 34, def: 12, exp: 48, gold: 34, drop: null },
+  will_o_wisp: { id: "will_o_wisp", name: "ฮิโตดามะ (แสงวิญญาณ)", sprite: "🟡", spr: "bat", lv: 16, hp: 80,  atk: 40, def: 6,  exp: 52, gold: 40, drop: null },
+  bog_horror:  { id: "bog_horror",  name: "กามะยักษ์บึงยูเรอิ", sprite: "🐸", lv: 17, hp: 620, atk: 46, def: 18, exp: 620, gold: 450, boss: true, drop: { item: "dragon_mail", rate: 1.0 }, book: "book_life_drain", petEgg: { item: "egg_epic", rate: 0.5 } },
+  frost_wraith:{ id: "frost_wraith",name: "ยูเรอิเยือกแข็ง", sprite: "👻", spr: "bat", lv: 19, hp: 120, atk: 44, def: 12, exp: 66, gold: 46, drop: null },
+  ice_golem:   { id: "ice_golem",   name: "ยักษ์น้ำแข็ง",  sprite: "🧊", spr: "golem", lv: 20, hp: 220, atk: 48, def: 26, exp: 90, gold: 70, drop: { item: "frost_edge", rate: 0.2 } },
+  nyx_duel:    { id: "nyx_duel",    name: "เทงงุคะรัส",    sprite: "🥷", lv: 22, hp: 780, atk: 54, def: 22, exp: 900, gold: 600, boss: true, drop: { item: "frost_edge", rate: 1.0 }, book: "book_arrow_rain", petEgg: { item: "egg_epic", rate: 1.0 } },
+  ashen_knight:{ id: "ashen_knight",name: "ซามูไรเถ้าถ่าน", sprite: "⚔️", lv: 24, hp: 200, atk: 56, def: 30, exp: 100, gold: 80, drop: null },
+  wraith:      { id: "wraith",      name: "โอนเรียว (วิญญาณอาฆาต)", sprite: "👻", spr: "bat", lv: 25, hp: 160, atk: 60, def: 16, exp: 110, gold: 90, drop: null },
+  vheron:      { id: "vheron",      name: "โชกุนอสูร คุโรกาเนะ", sprite: "👹", lv: 28, hp: 1200, atk: 68, def: 30, exp: 1500, gold: 1000, boss: true, drop: { item: "aether_robe", rate: 1.0 }, book: "book_thunderbolt", petEgg: { item: "egg_legend", rate: 0.5 } },
+  the_hollow:  { id: "the_hollow",  name: "อุตสึโระ (ความว่างเปล่า)", sprite: "⚫", lv: 32, hp: 1800, atk: 76, def: 34, exp: 3000, gold: 1500, boss: true, drop: null, book: "book_meteor", petEgg: { item: "egg_legend", rate: 1.0 } },
 };
 
 /* ---------- เควส (Quests) ---------- */
@@ -158,16 +159,22 @@ GameData.quests = {};
 
 /* ---------- NPC ---------- */
 GameData.npcs = {
-  elder:    { id: "elder",    name: "อาจารย์โรวัน",   icon: "🧙", story: true },
-  guard:    { id: "guard",    name: "กัปตันโดรัน",     icon: "💂", story: true },
-  merchant: { id: "merchant", name: "เมอร์ริคมือทองแดง", icon: "🧑‍🌾", shop: ["potion", "hi_potion", "ether", "antidote", "wood_sword", "iron_sword", "mythril_bow", "leather_armor", "iron_armor", "dragon_mail", "leather_cap", "iron_helm", "wooden_shield", "tower_shield", "padded_legs", "iron_greaves", "leather_boots", "swift_boots", "guard_amulet", "power_amulet", "power_ring", "guard_ring", "swift_ring", "keen_earring", "ward_earring", "book_greater_heal", "book_guard_break", "egg_common", "egg_rare", "pet_berry", "pet_meat", "pet_jelly"] },
-  healer:   { id: "healer",   name: "บาทหลวงอันเซล์ม", icon: "⛪", heal: true },
-  pip:      { id: "pip",      name: "พิพ",            icon: "🧒", story: true },
-  isolde:   { id: "isolde",   name: "เลดี้อิโซลด์",    icon: "🏹", story: true },
-  grimm:    { id: "grimm",    name: "กริมม์",          icon: "🧔", story: true },
-  maeve:    { id: "maeve",    name: "แม่มดพยากรณ์เมฟ",  icon: "🔮", story: true },
-  nyx:      { id: "nyx",      name: "นิกซ์",           icon: "🥷", story: true },
-  vheron:   { id: "vheron",   name: "วีรอน ราชันเถ้าธุลี", icon: "👑", story: true },
+  elder:    { id: "elder",    name: "อาจารย์เก็นโซ",   icon: "🧙", story: true },
+  guard:    { id: "guard",    name: "หัวหน้าองครักษ์ทาเคชิ", icon: "💂", story: true },
+  merchant: { id: "merchant", name: "พ่อค้าโกโร่",     icon: "🧑‍🌾", shop: ["potion", "hi_potion", "ether", "antidote", "town_scroll", "wood_sword", "iron_sword", "mythril_bow", "leather_armor", "iron_armor", "dragon_mail", "leather_cap", "iron_helm", "wooden_shield", "tower_shield", "padded_legs", "iron_greaves", "leather_boots", "swift_boots", "guard_amulet", "power_amulet", "power_ring", "guard_ring", "swift_ring", "keen_earring", "ward_earring", "book_greater_heal", "book_guard_break", "egg_common", "egg_rare", "pet_berry", "pet_meat", "pet_jelly"] },
+  healer:   { id: "healer",   name: "มิโกะฮารุ",       icon: "⛩️", heal: true },
+  pip:      { id: "pip",      name: "เด็กชายคินตะ",    icon: "🧒", story: true },
+  isolde:   { id: "isolde",   name: "คุนอิจิอายาเมะ",   icon: "🏹", story: true },
+  grimm:    { id: "grimm",    name: "นักดาบจิน",       icon: "🧔", story: true },
+  maeve:    { id: "maeve",    name: "โอราคุรุยูบา",     icon: "🔮", story: true },
+  nyx:      { id: "nyx",      name: "คุนอิจิชิซึกะ",    icon: "🥷", story: true },
+  vheron:   { id: "vheron",   name: "โชกุนอสูร คุโรกาเนะ", icon: "👹", story: true },
+  // ---- NPC เควสย่อยในหมู่บ้าน ----
+  taro:     { id: "taro",     name: "ชาวนาทาโร่",      icon: "🧑‍🌾", side: true },
+  hana:     { id: "hana",     name: "แม่ค้าฮานะ",      icon: "👩", side: true },
+  kenji:    { id: "kenji",    name: "ช่างตีดาบเคนจิ",   icon: "🧔‍♂️", side: true },
+  yuki:     { id: "yuki",     name: "เด็กหญิงยูกิจัง",  icon: "👧", side: true },
+  board:    { id: "board",    name: "กระดานเควส",      icon: "📋", side: true },
 };
 
 /* ---------- แผนที่ (Maps) ----------
@@ -256,7 +263,7 @@ function buildMap(spec) {
 
 GameData.maps = {
   town: {
-    id: "town", name: "หมู่บ้านเอลดาร์", encounters: [],
+    id: "town", name: "หมู่บ้านฮารุคาเซะ", town: true, encounters: [],
     grid: buildMap({
       W: 32, H: 24, base: 3, border: 6, seed: 11,
       rects: [
@@ -266,19 +273,23 @@ GameData.maps = {
       clusters: [{ tile: 1, blobs: 7, radius: 1 }],
       ground: [[0, 0.06]],
       spawn: [16, 20],
-      clear: [[16, 20], [16, 22], [16, 21], [11, 6], [21, 6], [21, 17], [11, 17], [16, 10]],
-      connect: [[16, 22], [16, 21], [11, 6], [21, 6], [21, 17], [11, 17], [16, 10]],
+      clear: [[16, 20], [16, 22], [16, 21], [11, 6], [21, 6], [21, 17], [11, 17], [16, 10],
+        [6, 10], [26, 10], [10, 20], [22, 20], [13, 14]],
+      connect: [[16, 22], [16, 21], [11, 6], [21, 6], [21, 17], [11, 17], [16, 10],
+        [6, 10], [26, 10], [10, 20], [22, 20], [13, 14]],
     }),
     npcs: [
       { id: "elder", x: 11, y: 6 }, { id: "merchant", x: 21, y: 6 },
       { id: "guard", x: 21, y: 17 }, { id: "healer", x: 11, y: 17 }, { id: "pip", x: 16, y: 10 },
+      { id: "board", x: 13, y: 14 }, { id: "taro", x: 6, y: 10 }, { id: "hana", x: 26, y: 10 },
+      { id: "kenji", x: 10, y: 20 }, { id: "yuki", x: 22, y: 20 },
     ],
     portals: [{ x: 16, y: 22, to: "field", tx: 16, ty: 2 }],
     spawn: { x: 16, y: 20 },
   },
 
   field: {
-    id: "field", name: "ทุ่งกรีนฟิลด์ส",
+    id: "field", name: "ทุ่งอาโอบะ",
     encounters: [
       { enemy: "slime", weight: 5 }, { enemy: "bat", weight: 3 }, { enemy: "wolf", weight: 2 },
     ],
@@ -296,13 +307,13 @@ GameData.maps = {
     ],
     portals: [
       { x: 16, y: 1, to: "town", tx: 16, ty: 21 },
-      { x: 16, y: 22, to: "forest", tx: 16, ty: 2, lock: { flag: "thornwood_open", level: 5, msg: "ประตูป่าธอร์นวูดถูกผนึก — คุยกับเลดี้อิโซลด์เพื่อขออนุญาตเข้า" } },
+      { x: 16, y: 22, to: "forest", tx: 16, ty: 2, lock: { flag: "thornwood_open", level: 5, msg: "ประตูป่าโยไกถูกผนึก — คุยกับคุนอิจิอายาเมะเพื่อขออนุญาตเข้า" } },
     ],
     spawn: { x: 16, y: 2 },
   },
 
   forest: {
-    id: "forest", name: "ป่าธอร์นวูด",
+    id: "forest", name: "ป่าโยไก",
     encounters: [{ enemy: "dire_wolf", weight: 4 }, { enemy: "treant", weight: 3 }],
     grid: buildMap({
       W: 32, H: 24, base: 4, border: 1, seed: 33,
@@ -318,13 +329,13 @@ GameData.maps = {
     ],
     portals: [
       { x: 16, y: 1, to: "field", tx: 16, ty: 21 },
-      { x: 16, y: 22, to: "emberpeak", tx: 16, ty: 2, lock: { flag: "emberpeak_open", level: 9, msg: "ช่องเขาเอมเบอร์พีคร้อนระอุ — ต้องได้ตราจากอิโซลด์ก่อน" } },
+      { x: 16, y: 22, to: "emberpeak", tx: 16, ty: 2, lock: { flag: "emberpeak_open", level: 9, msg: "ช่องเขาคาซันร้อนระอุ — ต้องได้ตราจากอายาเมะก่อน" } },
     ],
     spawn: { x: 16, y: 2 },
   },
 
   emberpeak: {
-    id: "emberpeak", name: "ภูเขาไฟเอมเบอร์พีค",
+    id: "emberpeak", name: "ภูเขาไฟคาซัน",
     encounters: [{ enemy: "fire_imp", weight: 4 }, { enemy: "magma_golem", weight: 2 }],
     grid: buildMap({
       W: 32, H: 24, base: 5, border: 6, seed: 44,
@@ -339,13 +350,13 @@ GameData.maps = {
     ],
     portals: [
       { x: 16, y: 1, to: "forest", tx: 16, ty: 21 },
-      { x: 16, y: 22, to: "mistfen", tx: 16, ty: 2, lock: { flag: "mistfen_open", level: 14, msg: "หมอกพิษบึงมิสท์เฟนหนาแน่น — ต้องมีตะเกียงหมอกจากกริมม์" } },
+      { x: 16, y: 22, to: "mistfen", tx: 16, ty: 2, lock: { flag: "mistfen_open", level: 14, msg: "หมอกพิษบึงยูเรอิหนาแน่น — ต้องมีตะเกียงหมอกจากจิน" } },
     ],
     spawn: { x: 16, y: 2 },
   },
 
   mistfen: {
-    id: "mistfen", name: "บึงมิสท์เฟน",
+    id: "mistfen", name: "บึงยูเรอิ",
     encounters: [
       { enemy: "bog_lurker", weight: 4 }, { enemy: "will_o_wisp", weight: 3 }, { enemy: "dire_wolf", weight: 1 },
     ],
@@ -363,13 +374,13 @@ GameData.maps = {
     ],
     portals: [
       { x: 16, y: 1, to: "emberpeak", tx: 16, ty: 21 },
-      { x: 16, y: 22, to: "frostspire", tx: 16, ty: 2, lock: { flag: "frostspire_open", level: 18, msg: "พายุหิมะปิดทางฟรอสต์สไปร์ — ต้องรู้ความจริงจากอาจารย์โรวันก่อน" } },
+      { x: 16, y: 22, to: "frostspire", tx: 16, ty: 2, lock: { flag: "frostspire_open", level: 18, msg: "พายุหิมะปิดทางยอดเขายูกิ — ต้องรู้ความจริงจากอาจารย์เก็นโซก่อน" } },
     ],
     spawn: { x: 16, y: 2 },
   },
 
   frostspire: {
-    id: "frostspire", name: "เทือกเขาฟรอสต์สไปร์",
+    id: "frostspire", name: "ยอดเขายูกิ",
     encounters: [{ enemy: "frost_wraith", weight: 4 }, { enemy: "ice_golem", weight: 2 }],
     grid: buildMap({
       W: 32, H: 24, base: 7, border: 6, seed: 66,
@@ -384,13 +395,13 @@ GameData.maps = {
     ],
     portals: [
       { x: 16, y: 1, to: "mistfen", tx: 16, ty: 21 },
-      { x: 16, y: 22, to: "citadel", tx: 16, ty: 2, lock: { flag: "citadel_open", level: 24, msg: "ประตูป้อมเถ้าธุลีปิดสนิท — ต้องรวมเสี้ยวครบทั้งสี่ก่อน" } },
+      { x: 16, y: 22, to: "citadel", tx: 16, ty: 2, lock: { flag: "citadel_open", level: 24, msg: "ประตูปราสาทโอนิปิดสนิท — ต้องรวมเศษกระจกครบทั้งสี่ก่อน" } },
     ],
     spawn: { x: 16, y: 2 },
   },
 
   citadel: {
-    id: "citadel", name: "ป้อมเถ้าธุลี",
+    id: "citadel", name: "ปราสาทโอนิคุโรกาเนะ",
     encounters: [{ enemy: "ashen_knight", weight: 3 }, { enemy: "wraith", weight: 3 }],
     grid: buildMap({
       W: 32, H: 24, base: 5, border: 6, seed: 77,

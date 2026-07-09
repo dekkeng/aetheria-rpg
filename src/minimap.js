@@ -15,6 +15,39 @@ Minimap.init = function () {
   Minimap.canvas = document.getElementById("minimap-canvas");
   if (!Minimap.canvas) return;
   Minimap.ctx = Minimap.canvas.getContext("2d");
+  // แตะ minimap -> เปิดแผนที่เต็ม + แผนที่โลก
+  Minimap.canvas.style.cursor = "pointer";
+  Minimap.canvas.title = "แตะเพื่อดูแผนที่เต็ม";
+  Minimap.canvas.addEventListener("click", () => { if (typeof UI !== "undefined") UI.openMapView(); });
+};
+
+/* วาดแผนที่ลง canvas เป้าหมายที่ขนาด cell ใหญ่ (สำหรับหน้าต่างแผนที่เต็ม) */
+Minimap.drawInto = function (target, map, maxPx) {
+  const rows = map.grid.length, cols = map.grid[0].length;
+  const cell = Math.max(3, Math.floor(maxPx / Math.max(cols, rows)));
+  target.width = cols * cell; target.height = rows * cell;
+  const c = target.getContext("2d");
+  for (let r = 0; r < rows; r++) for (let cx = 0; cx < cols; cx++) {
+    const t = GameData.tiles[map.grid[r][cx]];
+    c.fillStyle = t ? Minimap.color(t) : "#000";
+    c.fillRect(cx * cell, r * cell, cell, cell);
+  }
+  (map.portals || []).forEach((pt) => {
+    c.fillStyle = pt.lock ? "#c8b25a" : "#69e0ff";
+    c.fillRect(pt.x * cell, pt.y * cell, cell, cell);
+  });
+  // NPC (เฉพาะแมพปัจจุบัน ถ้าเป็นแมพที่ผู้เล่นอยู่)
+  const isHere = State.player && State.player.map === map.id;
+  (map.npcs || []).forEach((n) => {
+    c.fillStyle = n.boss ? "#ff6a5e" : "#ffd76a";
+    c.beginPath(); c.arc((n.x + 0.5) * cell, (n.y + 0.5) * cell, cell * 0.5, 0, 7); c.fill();
+  });
+  if (isHere) {
+    const p = State.player;
+    c.fillStyle = "#fff"; c.strokeStyle = "#6ee787"; c.lineWidth = 2;
+    c.beginPath(); c.arc(p.fx * cell, p.fy * cell, cell * 0.6, 0, 7); c.fill(); c.stroke();
+  }
+  return cell;
 };
 
 /* สีของทายล์บนแผนที่ย่อ */

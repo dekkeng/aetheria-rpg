@@ -186,6 +186,51 @@ World.enterPortal = function (pt) {
   else go();
 };
 
+/* หาเมืองที่ใกล้ที่สุด (BFS ผ่านกราฟพอร์ทัล) จากแมพปัจจุบัน */
+World.nearestTown = function (fromMap) {
+  const maps = GameData.maps;
+  if (maps[fromMap] && maps[fromMap].town) return fromMap;
+  const seen = new Set([fromMap]);
+  let frontier = [fromMap];
+  while (frontier.length) {
+    const next = [];
+    for (const m of frontier) {
+      const map = maps[m];
+      if (!map) continue;
+      for (const pt of (map.portals || [])) {
+        if (pt.to && !seen.has(pt.to)) {
+          if (maps[pt.to] && maps[pt.to].town) return pt.to;
+          seen.add(pt.to); next.push(pt.to);
+        }
+      }
+    }
+    frontier = next;
+  }
+  return "town";   // fallback
+};
+
+/* วาปกลับเมืองที่ใกล้ที่สุด (ใช้จากโอฟุดะเรียกกลับ) */
+World.warpToTown = function () {
+  const p = State.player;
+  const townId = World.nearestTown(p.map);
+  const town = GameData.maps[townId];
+  if (!town) return false;
+  if (typeof SFX !== "undefined") SFX.play("portal");
+  const go = () => {
+    p.map = townId; p.x = town.spawn.x; p.y = town.spawn.y;
+    p.fx = p.x + 0.5; p.fy = p.y + 0.5;
+    if (typeof Net !== "undefined") { Net.others = []; Net.sendState("move"); }
+    if (typeof Art !== "undefined") Art.applyZoneMood(townId);
+    if (typeof Music !== "undefined") Music.playForMap(townId);
+    World.resume();
+    UI.toast("🎴 วาปกลับ " + town.name);
+    if (typeof Game !== "undefined" && Game.autosave) Game.autosave("warp");
+  };
+  if (typeof FX !== "undefined") FX.transition(go, "#0a0916");
+  else go();
+  return true;
+};
+
 /* คุยกับ NPC/บอส/ประตูที่อยู่ใกล้ที่สุด (ในรัศมี) */
 World.interact = function () {
   if (State.screen !== "world") return;
@@ -207,6 +252,7 @@ World.interact = function () {
   const def = GameData.npcs[npc.id] || { icon: "❓", name: "?" };
   if (def.shop) { UI.openShop(def); return; }
   if (def.heal) { UI.openDialog(def); return; }
+  if (def.side && typeof SideQuests !== "undefined" && SideQuests.interact(npc.id)) return;
   if (Story.interact(npc.id)) return;
   UI.openDialog(def);
 };
