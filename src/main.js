@@ -395,10 +395,11 @@ Game.bindKeyboard = function () {
   document.addEventListener("keydown", (e) => {
     if (State.screen !== "world") return;
     if (Game.chatOpen) return;                         // กำลังพิมพ์แชท ไม่คุมเกม
+    if (UI.dialogOpen && UI.dialogOpen()) return;      // กล่องสนทนาคุมคีย์เอง (ui.js)
     if (e.code === "Enter" || e.code === "NumpadEnter") { if (Game.openChat) Game.openChat(); e.preventDefault(); return; }  // Enter = เปิดแชท
     const dir = keyDir(e);
     if (dir) { World.setInput(dir, true); e.preventDefault(); return; }
-    if (e.code === "Space") { World.interact(); e.preventDefault(); }   // Space = คุย/โต้ตอบ
+    if (e.code === "Space" && !e.repeat) { World.interact(); e.preventDefault(); }   // Space = คุย/โต้ตอบ
   });
   document.addEventListener("keyup", (e) => {
     const dir = keyDir(e);

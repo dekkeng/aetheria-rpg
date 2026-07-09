@@ -105,8 +105,55 @@ UI.portraitHtml = function (speaker) {
 };
 
 /* ---------- บทสนทนาแบบ visual-novel ---------- */
+
+/* กล่องสนทนาเปิดอยู่ไหม (world ใช้เช็คก่อนรับปุ่มเดิน/คุย) */
+UI.dialogOpen = function () {
+  const l = UI.$("#dialogue");
+  return !!(l && l.classList.contains("open"));
+};
+
+/* คีย์บอร์ดคุมบทสนทนา: Space/Enter ไปต่อ · ลูกศร/WASD เลื่อนตัวเลือก
+ * เลข 1-9 เลือกทันที — จับที่ capture phase กันชนกับปุ่มเดินของ world */
+UI._dlgAdvance = null;   // fn ไปข้อความถัดไป (dialogue ปกติ)
+UI._dlgChoice = null;    // { options, sel, confirm } (โหมดตัวเลือก)
+UI.bindDialogKeys = function () {
+  if (UI._dlgKeysBound) return;
+  UI._dlgKeysBound = true;
+  document.addEventListener("keydown", (e) => {
+    if (!UI.dialogOpen()) return;
+    const code = e.code;
+    const c = UI._dlgChoice;
+    if (c) {
+      const n = c.options.length;
+      if (code === "ArrowUp" || code === "KeyW" || code === "ArrowLeft" || code === "KeyA") {
+        c.sel = (c.sel + n - 1) % n; UI._updateChoiceSel();
+      } else if (code === "ArrowDown" || code === "KeyS" || code === "ArrowRight" || code === "KeyD") {
+        c.sel = (c.sel + 1) % n; UI._updateChoiceSel();
+      } else if ((code === "Enter" || code === "NumpadEnter" || code === "Space") && !e.repeat) {
+        c.confirm(c.sel);
+      } else if (/^Digit[1-9]$/.test(code)) {
+        const idx = +code.slice(5) - 1;
+        if (idx < n) c.confirm(idx);
+      }
+    } else if (UI._dlgAdvance) {
+      if ((code === "Enter" || code === "NumpadEnter" || code === "Space") && !e.repeat) {
+        UI._dlgAdvance();
+      }
+    }
+    e.preventDefault();
+    e.stopPropagation();   // ไม่ให้ทะลุไปสั่งเดิน/เปิดแชท
+  }, true);
+};
+UI._updateChoiceSel = function () {
+  const c = UI._dlgChoice;
+  if (!c) return;
+  UI.$$("#dialogue [data-ci]").forEach((b) =>
+    b.classList.toggle("sel", +b.dataset.ci === c.sel));
+};
+
 UI.playDialogue = function (lines, done) {
   if (!lines || !lines.length) { done && done(); return; }
+  UI.bindDialogKeys();
   const layer = UI.$("#dialogue");
   let i = 0;
   const render = () => {
@@ -115,39 +162,55 @@ UI.playDialogue = function (lines, done) {
     const portrait = isNarr ? "" : UI.portraitHtml(ln.s);
     const name = isNarr ? "" : `<div class="dlg-name">${ln.s}</div>`;
     layer.innerHTML = `<div class="dlg-box ${isNarr ? "narr" : ""} ${portrait ? "has-portrait" : ""}">
-        ${portrait}${name}<div class="dlg-text">${ln.t}</div><div class="dlg-next">▶ แตะเพื่อไปต่อ</div>
+        ${portrait}${name}<div class="dlg-text">${ln.t}</div><div class="dlg-next">▶ SPACE / แตะ เพื่อไปต่อ</div>
       </div>`;
   };
   const advance = () => {
     i++;
-    if (i >= lines.length) { layer.classList.remove("open"); layer.onclick = null; done && done(); return; }
+    if (i >= lines.length) {
+      layer.classList.remove("open"); layer.onclick = null;
+      UI._dlgAdvance = null;
+      done && done();
+      return;
+    }
     if (typeof SFX !== "undefined") SFX.play("menu");
     render();
   };
   layer.classList.add("open");
   layer.onclick = advance;
+  UI._dlgAdvance = advance;
+  UI._dlgChoice = null;
   render();
 };
 
 /* ตัวเลือกทางแยกเนื้อเรื่อง */
 UI.playChoice = function (prompt, options, big) {
+  UI.bindDialogKeys();
   const layer = UI.$("#dialogue");
   layer.classList.add("open");
   layer.onclick = null;
+  UI._dlgAdvance = null;
   const btns = options.map((o, idx) =>
     `<button class="btn ${big ? "btn-primary" : ""}" data-ci="${idx}">${o.label}</button>`).join("");
   layer.innerHTML = `<div class="dlg-box choice">
       <div class="dlg-text">${prompt}</div>
-      <div class="dlg-choices">${btns}</div></div>`;
-  UI.$$("#dialogue [data-ci]").forEach((b) =>
-    b.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const o = options[+b.dataset.ci];
-      layer.classList.remove("open"); layer.onclick = null;
-      if (typeof SFX !== "undefined") SFX.play("select");
-      o.on();
-    })
-  );
+      <div class="dlg-choices">${btns}</div>
+      <div class="dlg-next">↑↓ เลือก · SPACE ยืนยัน</div></div>`;
+  const confirm = (idx) => {
+    const o = options[idx];
+    layer.classList.remove("open"); layer.onclick = null;
+    UI._dlgChoice = null;
+    if (typeof SFX !== "undefined") SFX.play("select");
+    o.on();
+  };
+  UI._dlgChoice = { options, sel: 0, confirm };
+  UI.$$("#dialogue [data-ci]").forEach((b) => {
+    b.addEventListener("click", (e) => { e.stopPropagation(); confirm(+b.dataset.ci); });
+    b.addEventListener("mouseenter", () => {
+      if (UI._dlgChoice) { UI._dlgChoice.sel = +b.dataset.ci; UI._updateChoiceSel(); }
+    });
+  });
+  UI._updateChoiceSel();
 };
 
 /* ---------- สมุดบันทึกเนื้อเรื่อง ---------- */

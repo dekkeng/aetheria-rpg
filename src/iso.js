@@ -122,6 +122,7 @@ Iso.tick = function (dt) {
   Iso.syncPet();
   Iso.syncPortals();
   Iso.syncBubbles();
+  Iso.syncHint();
   const mn = document.getElementById("map-name");
   const map = GameData.maps[p.map];
   if (mn && map && mn.textContent !== map.name) mn.textContent = map.name;
@@ -465,6 +466,35 @@ Iso.syncPet = function () {
 Iso.syncPortals = function () {
   const a = 0.7 + 0.3 * Math.sin(Iso.now() / 320);
   Iso.ent.portals.forEach((img) => { if (img._pulse) img.setAlpha(a); });
+};
+
+/* ---------- ป้าย "กด SPACE" ใต้ NPC ที่อยู่ในระยะคุย ---------- */
+Iso.syncHint = function () {
+  const sc = Iso.scene;
+  const p = State.player;
+  if (!Iso.hintText) {
+    Iso.hintText = sc.add.text(0, 0, "␣ กด SPACE", {
+      fontFamily: "Kanit, sans-serif", fontSize: "14px", fontStyle: "600",
+      color: "#ffd76a", backgroundColor: "rgba(10,9,22,0.82)",
+      padding: { x: 8, y: 3 },
+    }).setOrigin(0.5, 0).setDepth(95000).setVisible(false);
+  }
+  // NPC ใกล้สุดในรัศมีเดียวกับ World.interact (~1.5 ช่อง)
+  const map = GameData.maps[p.map];
+  let best = null, bestD = 1.5 * 1.5;
+  (map.npcs || []).forEach((n) => {
+    const dx = (n.x + 0.5) - p.fx, dy = (n.y + 0.5) - p.fy, d = dx * dx + dy * dy;
+    if (d < bestD) { bestD = d; best = n; }
+  });
+  const dlgOpen = (typeof UI !== "undefined" && UI.dialogOpen && UI.dialogOpen());
+  if (!best || dlgOpen || World.locked) {
+    Iso.hintText.setVisible(false);
+    return;
+  }
+  const pos = Iso.toScreen(best.x + 0.5, best.y + 0.5);
+  const bob = Math.sin(Iso.now() / 320) * 2;
+  Iso.hintText.setPosition(pos.x, pos.y + 8 + bob);
+  Iso.hintText.setVisible(true);
 };
 
 /* ---------- ฟองแชทเหนือหัว ---------- */

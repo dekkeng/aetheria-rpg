@@ -529,6 +529,12 @@ body {
 .dlg-box.choice { cursor: default; }
 .dlg-choices { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
 .dlg-choices .btn { text-align: left; }
+/* ตัวเลือกที่โฟกัสด้วยคีย์บอร์ด (↑↓ + SPACE) */
+.dlg-choices .btn.sel {
+  background: var(--accent); border-color: var(--accent2);
+  box-shadow: 0 0 0 2px rgba(166,139,255,.35), 0 4px 14px rgba(123,92,255,.4);
+  transform: translateX(4px);
+}
 
 /* ---------- Minigame layer ---------- */
 .mg-layer {
