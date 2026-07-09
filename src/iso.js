@@ -80,7 +80,7 @@ Iso.init = function () {
       Iso.playerSpr = null;
       Iso.petSprite = null;
       Iso.bubblePool = new Map();
-      Iso.hintText = null;
+      Iso.hintCont = null;
       this.cameras.main.setRoundPixels(true);
       this.scale.on("resize", () => Iso.applyZoom());
       // Phaser Scale.RESIZE ฟังแค่ resize ของ window — ตอนสลับไปฉากต่อสู้
@@ -421,17 +421,20 @@ Iso.syncPortals = function () {
   Iso.ent.portals.forEach((img) => { if (img._pulse) img.setAlpha(a); });
 };
 
-/* ---------- ป้าย "กด SPACE" ใต้ NPC ในระยะคุย ---------- */
+/* ---------- ป้ายปุ่มโต้ตอบใต้ NPC ในระยะคุย (คีย์แคปสัญลักษณ์อย่างเดียว) ---------- */
 Iso.syncHint = function () {
   const sc = Iso.scene;
   const p = State.player;
   const T = Iso.TILE;
-  if (!Iso.hintText) {
-    Iso.hintText = sc.add.text(0, 0, "␣ กด SPACE", {
-      fontFamily: "Kanit, sans-serif", fontSize: "13px", fontStyle: "600",
-      color: "#ffd76a", backgroundColor: "rgba(10,9,22,0.82)",
-      padding: { x: 7, y: 2 },
-    }).setOrigin(0.5, 0).setDepth(95000).setVisible(false);
+  if (!Iso.hintCont) {
+    // คีย์แคป: กล่องมนโค้ง + สัญลักษณ์ปุ่ม (สะท้อนปุ่ม interact ที่ตั้งไว้)
+    const cont = sc.add.container(0, 0).setDepth(95000).setVisible(false);
+    const g = sc.add.graphics();
+    const txt = sc.add.text(0, 0, "␣", {
+      fontFamily: "Kanit, sans-serif", fontSize: "18px", fontStyle: "700", color: "#fff8e0",
+    }).setOrigin(0.5, 0.5);
+    cont.add(g); cont.add(txt);
+    Iso.hintCont = cont; Iso.hintG = g; Iso.hintTxt = txt; Iso.hintLabel = null;
   }
   const map = GameData.maps[p.map];
   let best = null, bestD = 1.5 * 1.5;
@@ -440,13 +443,28 @@ Iso.syncHint = function () {
     if (d < bestD) { bestD = d; best = n; }
   });
   const dlgOpen = (typeof UI !== "undefined" && UI.dialogOpen && UI.dialogOpen());
-  if (!best || dlgOpen || World.locked) {
-    Iso.hintText.setVisible(false);
-    return;
+  if (!best || dlgOpen || World.locked) { Iso.hintCont.setVisible(false); return; }
+
+  // ป้ายสะท้อนปุ่มโต้ตอบปัจจุบัน (Space -> ␣, หรือปุ่มที่ผู้เล่นตั้งเอง)
+  const code = (typeof Keybind !== "undefined") ? Keybind.get().interact[0] : "Space";
+  const label = (typeof Keybind !== "undefined") ? Keybind.label(code) : "␣";
+  if (label !== Iso.hintLabel) {
+    Iso.hintLabel = label;
+    Iso.hintTxt.setText(label);
+    // วาดคีย์แคปให้พอดีข้อความ (spacebar กว้างกว่าปุ่มตัวอักษร)
+    const wide = label === "␣";
+    const w = wide ? 44 : Math.max(26, Iso.hintTxt.width + 14);
+    const h = 24;
+    Iso.hintG.clear();
+    Iso.hintG.fillStyle(0x1a1730, 0.92);
+    Iso.hintG.lineStyle(2, 0xffd76a, 1);
+    Iso.hintG.fillRoundedRect(-w / 2, -h / 2, w, h, 6);
+    Iso.hintG.strokeRoundedRect(-w / 2, -h / 2, w, h, 6);
+    Iso.hintTxt.setPosition(0, -1);
   }
   const bob = Math.sin(Iso.now() / 320) * 2;
-  Iso.hintText.setPosition(best.x * T + T / 2, best.y * T + T * 0.95 + bob);
-  Iso.hintText.setVisible(true);
+  Iso.hintCont.setPosition(best.x * T + T / 2, best.y * T + T * 1.05 + bob);
+  Iso.hintCont.setVisible(true);
 };
 
 /* ---------- ฟองแชทเหนือหัว ---------- */

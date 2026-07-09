@@ -386,24 +386,25 @@ Game.bindOverlay = function () {
 };
 
 /* ---------- คีย์บอร์ด (เล่นบน PC) ----------
- * ใช้ e.code (ตำแหน่งปุ่มจริง) — WASD ใช้ได้แม้สลับภาษาคีย์บอร์ด (ไทย ฯลฯ) */
+ * ปุ่มปรับได้เองผ่าน Keybind (อ่านสดทุกครั้งที่กด — เปลี่ยนแล้วมีผลทันที) */
+Game.rebindCapture = null;   // ระหว่างตั้งปุ่มใหม่: ฟังก์ชันรับ e.code
 Game.bindKeyboard = function () {
-  const keyDir = (e) => ({
-    KeyW: "up", KeyS: "down", KeyA: "left", KeyD: "right",
-    ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right",
-  }[e.code]);
+  const DIRS = { up: 1, down: 1, left: 1, right: 1 };
   document.addEventListener("keydown", (e) => {
+    // โหมดจับปุ่มใหม่ (เมนูตั้งค่า) — กินทุกปุ่ม
+    if (Game.rebindCapture) { e.preventDefault(); e.stopPropagation(); Game.rebindCapture(e.code); return; }
     if (State.screen !== "world") return;
     if (Game.chatOpen) return;                         // กำลังพิมพ์แชท ไม่คุมเกม
     if (UI.dialogOpen && UI.dialogOpen()) return;      // กล่องสนทนาคุมคีย์เอง (ui.js)
-    if (e.code === "Enter" || e.code === "NumpadEnter") { if (Game.openChat) Game.openChat(); e.preventDefault(); return; }  // Enter = เปิดแชท
-    const dir = keyDir(e);
-    if (dir) { World.setInput(dir, true); e.preventDefault(); return; }
-    if (e.code === "Space" && !e.repeat) { World.interact(); e.preventDefault(); }   // Space = คุย/โต้ตอบ
+    const act = Keybind.actionFor(e.code);
+    if (!act) return;
+    if (DIRS[act]) { World.setInput(act, true); e.preventDefault(); }
+    else if (act === "chat") { if (Game.openChat) Game.openChat(); e.preventDefault(); }
+    else if (act === "interact" && !e.repeat) { World.interact(); e.preventDefault(); }
   });
   document.addEventListener("keyup", (e) => {
-    const dir = keyDir(e);
-    if (dir) World.setInput(dir, false);
+    const act = Keybind.actionFor(e.code);
+    if (act && DIRS[act]) World.setInput(act, false);
   });
   // ล้าง input เมื่อออกจากโฟกัส/สลับแท็บ (กันเดินค้าง)
   window.addEventListener("blur", () => World.clearInput());

@@ -606,6 +606,31 @@ body {
 
 /* รายการปุ่มในเมนูตั้งค่า */
 .settings-list { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+.set-head { margin: 20px 0 4px; font-size: 15px; color: var(--accent2); }
+
+/* ตั้งค่าปุ่มควบคุม */
+.key-list { display: flex; flex-direction: column; gap: 7px; margin-top: 10px; }
+.key-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+  padding: 7px 10px;
+}
+.key-name { font-size: 14px; color: var(--text); }
+.key-caps { display: flex; gap: 6px; }
+.key-cap {
+  min-width: 40px; height: 34px; padding: 0 10px;
+  font-family: inherit; font-size: 15px; font-weight: 700; color: #fff8e0;
+  background: linear-gradient(180deg, #35315e, #221f3f);
+  border: 1px solid var(--border); border-bottom-width: 3px; border-radius: 7px;
+  cursor: pointer; transition: transform .06s, border-color .12s;
+}
+.key-cap:hover { border-color: var(--accent2); }
+.key-cap:active { transform: translateY(1px); border-bottom-width: 1px; }
+.key-cap.listening {
+  border-color: var(--gold); color: var(--gold);
+  animation: keyblink .8s infinite; font-size: 12px; font-weight: 600;
+}
+@keyframes keyblink { 50% { opacity: .5; } }
 
 /* ---------- Chat (multiplayer) — ฝั่งขวา ใต้ minimap ---------- */
 #chat-toggle {

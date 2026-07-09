@@ -252,18 +252,52 @@ UI.closeOverlay = function () {
 UI.openSettings = function () {
   const render = () => {
     const on = (typeof SFX !== "undefined") ? SFX.enabled : true;
+    const binds = Keybind.get();
+    const keyRows = Keybind.ACTIONS.map((a) => {
+      const slots = [0, 1].map((s) => {
+        const code = binds[a.id][s];
+        return `<button class="key-cap" data-act="${a.id}" data-slot="${s}">${Keybind.label(code)}</button>`;
+      }).join("");
+      return `<div class="key-row"><span class="key-name">${a.label}</span><span class="key-caps">${slots}</span></div>`;
+    }).join("");
     UI.openOverlay(`
       <h2>⚙ ตั้งค่าเกม</h2>
       <div class="settings-list">
         <button class="btn wide" id="set-sound">${on ? "🔊 เสียง: เปิดอยู่" : "🔈 เสียง: ปิดอยู่"}</button>
+      </div>
+      <h3 class="set-head">⌨ ปุ่มควบคุม</h3>
+      <p class="sub">แตะช่องปุ่มแล้วกดปุ่มใหม่ที่ต้องการ (ปุ่มถูกบันทึกไว้กับผู้เล่นของคุณ)</p>
+      <div class="key-list">${keyRows}</div>
+      <div class="settings-list" style="margin-top:12px">
+        <button class="btn" id="set-keys-reset">↺ คืนค่าปุ่มเริ่มต้น</button>
         <button class="btn wide danger" id="set-logout">🚪 ออกจากระบบ</button>
       </div>
       <p class="sub" style="margin-top:14px">💾 เกมบันทึกอัตโนมัติตลอดเวลา ไม่ต้องกดเซฟเอง</p>
     `);
     UI.$("#set-sound").addEventListener("click", () => { Game.toggleSound(); render(); });
     UI.$("#set-logout").addEventListener("click", () => { UI.closeOverlay(); Game.confirmLogout(); });
+    UI.$("#set-keys-reset").addEventListener("click", () => { Keybind.reset(); render(); });
+    UI.$$(".key-cap").forEach((btn) => {
+      btn.addEventListener("click", () => UI.captureKey(btn, render));
+    });
   };
   render();
+};
+
+/* จับปุ่มใหม่สำหรับช่องที่คลิก */
+UI.captureKey = function (btn, done) {
+  const act = btn.dataset.act, slot = +btn.dataset.slot;
+  UI.$$(".key-cap.listening").forEach((b) => b.classList.remove("listening"));
+  btn.classList.add("listening");
+  btn.textContent = "กดปุ่ม…";
+  Game.rebindCapture = (code) => {
+    Game.rebindCapture = null;
+    btn.classList.remove("listening");
+    // Esc = ล้างช่องนี้ (เว้นว่าง)
+    Keybind.set(act, slot, code === "Escape" ? "" : code);
+    if (typeof SFX !== "undefined") SFX.play("select");
+    done();
+  };
 };
 
 /* ---------- เมนูตัวละคร ---------- */
