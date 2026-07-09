@@ -298,6 +298,9 @@ Battle.lose = function () {
     p.map = "town";
     p.x = GameData.maps.town.spawn.x;
     p.y = GameData.maps.town.spawn.y;
+    // ต้องตั้งพิกัดทศนิยมด้วย ไม่งั้นกล้อง/การชนยังอยู่พิกัดแมพเก่า -> จอมืดเดินไม่ได้
+    p.fx = p.x + 0.5;
+    p.fy = p.y + 0.5;
     Battle.returnWorld();
   });
 };
