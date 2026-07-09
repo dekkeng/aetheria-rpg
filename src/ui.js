@@ -382,9 +382,9 @@ UI.buildWorldMap = function (holder) {
     const scale = Math.min(1, availW / W, availH / H);
     const canvas = holder.querySelector(".wm-canvas");
     canvas.style.transform = `scale(${scale})`;
-    canvas.style.transformOrigin = "top center";
-    // ให้ holder สูงเท่าที่ย่อแล้ว + จัดกึ่งกลางแนวตั้งในกรอบ
-    holder.style.width = "100%";
+    canvas.style.transformOrigin = "top left";
+    // holder = ขนาดที่ย่อแล้วจริง เพื่อให้ flex-center จัดกึ่งกลางในกรอบพอดี
+    holder.style.width = Math.ceil(W * scale) + "px";
     holder.style.height = Math.ceil(H * scale) + "px";
   };
   // วัดกรอบจริงหลัง layout เสร็จ (2 รอบ กัน clientHeight ยังไม่นิ่ง)
