@@ -151,6 +151,13 @@ GameData.enemies = {
   wraith:      { id: "wraith",      name: "โอนเรียว (วิญญาณอาฆาต)", sprite: "👻", spr: "bat", lv: 25, hp: 160, atk: 60, def: 16, exp: 110, gold: 90, drop: null },
   vheron:      { id: "vheron",      name: "โชกุนอสูร คุโรกาเนะ", sprite: "👹", lv: 28, hp: 1200, atk: 68, def: 30, exp: 1500, gold: 1000, boss: true, drop: { item: "aether_robe", rate: 1.0 }, book: "book_thunderbolt", petEgg: { item: "egg_legend", rate: 0.5 } },
   the_hollow:  { id: "the_hollow",  name: "อุตสึโระ (ความว่างเปล่า)", sprite: "⚫", lv: 32, hp: 1800, atk: 76, def: 34, exp: 3000, gold: 1500, boss: true, drop: null, book: "book_meteor", petEgg: { item: "egg_legend", rate: 1.0 } },
+
+  // ---- มอนสเตอร์โซนแตกแขนง (ใช้สไปรต์เดิม) ----
+  kodama:        { id: "kodama",        name: "โคดามะน้อย",   sprite: "🟢", spr: "slime", lv: 2,  hp: 26,  atk: 7,  def: 3,  exp: 9,  gold: 7,  drop: { item: "slime_gel", rate: 0.5 }, drop2: { item: "pet_berry", rate: 0.3 } },
+  bamboo_tanuki: { id: "bamboo_tanuki", name: "ทานุกิป่าไผ่",  sprite: "🦝", spr: "wolf",  lv: 4,  hp: 42,  atk: 13, def: 5,  exp: 20, gold: 16, drop: { item: "wolf_fang", rate: 0.5 } },
+  cave_moth:     { id: "cave_moth",     name: "ผีเสื้อราตรี",  sprite: "🦋", spr: "bat",   lv: 5,  hp: 30,  atk: 15, def: 3,  exp: 22, gold: 16, drop: { item: "pet_berry", rate: 0.3 } },
+  stone_ari:     { id: "stone_ari",     name: "มดหินยักษ์",   sprite: "🪨", spr: "golem", lv: 6,  hp: 85,  atk: 18, def: 13, exp: 42, gold: 32, drop: { item: "iron_armor", rate: 0.1 } },
+  kitsune:       { id: "kitsune",       name: "คิสึเนะเก้าหาง", sprite: "🦊", spr: "drake", lv: 9,  hp: 240, atk: 26, def: 11, exp: 200, gold: 160, boss: true, drop: { item: "mythril_bow", rate: 0.6 }, drop2: { item: "town_scroll", rate: 1.0 }, petEgg: { item: "egg_rare", rate: 0.4 } },
 };
 
 /* ---------- เควส (Quests) ---------- */
@@ -175,6 +182,13 @@ GameData.npcs = {
   kenji:    { id: "kenji",    name: "ช่างตีดาบเคนจิ",   icon: "🧔‍♂️", side: true },
   yuki:     { id: "yuki",     name: "เด็กหญิงยูกิจัง",  icon: "👧", side: true },
   board:    { id: "board",    name: "กระดานเควส",      icon: "📋", side: true },
+  // ---- เมืองชายฝั่ง + โซนแตกแขนง ----
+  fisher:   { id: "fisher",   name: "ชาวประมงริว",     icon: "🎣", shop: ["potion", "hi_potion", "ether", "antidote", "town_scroll", "leather_boots", "swift_boots", "wooden_shield", "pet_berry", "pet_meat", "egg_common"] },
+  miko2:    { id: "miko2",    name: "มิโกะโคฮารุ",     icon: "⛩️", heal: true },
+  sora:     { id: "sora",     name: "กะลาสีโซระ",      icon: "🧑‍✈️", side: true },
+  board2:   { id: "board2",   name: "กระดานเควสชายฝั่ง", icon: "📋", side: true },
+  kaede:    { id: "kaede",    name: "นักสะสมคาเอเดะ",   icon: "🧓", side: true },
+  inari:    { id: "inari",    name: "นักบวชศาลเจ้าอินาริ", icon: "🦊", side: true },
 };
 
 /* ---------- แผนที่ (Maps) ----------
@@ -274,9 +288,9 @@ GameData.maps = {
       ground: [[0, 0.06]],
       spawn: [16, 20],
       clear: [[16, 20], [16, 22], [16, 21], [11, 6], [21, 6], [21, 17], [11, 17], [16, 10],
-        [6, 10], [26, 10], [10, 20], [22, 20], [13, 14]],
+        [6, 10], [26, 10], [10, 20], [22, 20], [13, 14], [1, 12], [30, 12], [2, 12], [29, 12]],
       connect: [[16, 22], [16, 21], [11, 6], [21, 6], [21, 17], [11, 17], [16, 10],
-        [6, 10], [26, 10], [10, 20], [22, 20], [13, 14]],
+        [6, 10], [26, 10], [10, 20], [22, 20], [13, 14], [1, 12], [30, 12]],
     }),
     npcs: [
       { id: "elder", x: 11, y: 6 }, { id: "merchant", x: 21, y: 6 },
@@ -284,7 +298,11 @@ GameData.maps = {
       { id: "board", x: 13, y: 14 }, { id: "taro", x: 6, y: 10 }, { id: "hana", x: 26, y: 10 },
       { id: "kenji", x: 10, y: 20 }, { id: "yuki", x: 22, y: 20 },
     ],
-    portals: [{ x: 16, y: 22, to: "field", tx: 16, ty: 2 }],
+    portals: [
+      { x: 16, y: 22, to: "field", tx: 16, ty: 2 },
+      { x: 30, y: 12, to: "bamboo", tx: 2, ty: 12 },
+      { x: 1, y: 12, to: "coast", tx: 29, ty: 12 },
+    ],
     spawn: { x: 16, y: 20 },
   },
 
@@ -298,8 +316,8 @@ GameData.maps = {
       clusters: [{ tile: 1, blobs: 9, radius: 2 }, { tile: 2, blobs: 3, radius: 2 }],
       ground: [[0, 0.06]],
       spawn: [16, 2],
-      clear: [[16, 1], [16, 2], [16, 22], [16, 21], [9, 18], [23, 9]],
-      connect: [[16, 1], [16, 22], [16, 21], [9, 18], [23, 9]],
+      clear: [[16, 1], [16, 2], [16, 22], [16, 21], [9, 18], [23, 9], [30, 12], [29, 12]],
+      connect: [[16, 1], [16, 22], [16, 21], [9, 18], [23, 9], [30, 12]],
     }),
     npcs: [
       { id: "isolde", x: 9, y: 18 },
@@ -308,6 +326,7 @@ GameData.maps = {
     portals: [
       { x: 16, y: 1, to: "town", tx: 16, ty: 21 },
       { x: 16, y: 22, to: "forest", tx: 16, ty: 2, lock: { flag: "thornwood_open", level: 5, msg: "ประตูป่าโยไกถูกผนึก — คุยกับคุนอิจิอายาเมะเพื่อขออนุญาตเข้า" } },
+      { x: 30, y: 12, to: "cave", tx: 2, ty: 12 },
     ],
     spawn: { x: 16, y: 2 },
   },
@@ -418,6 +437,80 @@ GameData.maps = {
     npcs: [{ id: "vheron", x: 16, y: 18, boss: "vheron" }],
     portals: [{ x: 16, y: 1, to: "frostspire", tx: 16, ty: 21 }],
     spawn: { x: 16, y: 2 },
+  },
+
+  /* ===== โซนแตกแขนงจากหมู่บ้าน/ทุ่ง ===== */
+  bamboo: {
+    id: "bamboo", name: "ป่าไผ่ซาซะ",
+    encounters: [{ enemy: "kodama", weight: 5 }, { enemy: "bamboo_tanuki", weight: 3 }],
+    grid: buildMap({
+      W: 32, H: 24, base: 4, border: 1, seed: 88,
+      clusters: [{ tile: 1, blobs: 18, radius: 2 }],
+      ground: [[0, 0.05]],
+      spawn: [2, 12],
+      clear: [[1, 12], [2, 12], [16, 1], [16, 2], [10, 8], [24, 16]],
+      connect: [[1, 12], [16, 1], [10, 8], [24, 16]],
+    }),
+    npcs: [{ id: "kaede", x: 10, y: 8 }],
+    portals: [
+      { x: 1, y: 12, to: "town", tx: 29, ty: 12 },
+      { x: 16, y: 1, to: "shrine", tx: 16, ty: 21 },
+    ],
+    spawn: { x: 2, y: 12 },
+  },
+
+  shrine: {
+    id: "shrine", name: "ศาลเจ้าอินาริ",
+    encounters: [{ enemy: "cave_moth", weight: 4 }, { enemy: "kodama", weight: 2 }],
+    grid: buildMap({
+      W: 30, H: 22, base: 0, border: 1, seed: 99,
+      rects: [[12, 4, 17, 8, 6], [6, 12, 9, 14, 6], [20, 12, 23, 14, 6]],
+      clusters: [{ tile: 1, blobs: 10, radius: 2 }],
+      ground: [[4, 0.05]],
+      spawn: [15, 20],
+      clear: [[15, 20], [15, 21], [15, 6], [15, 12], [8, 13], [21, 13]],
+      connect: [[15, 21], [15, 6], [15, 12], [8, 13], [21, 13]],
+    }),
+    npcs: [
+      { id: "inari", x: 8, y: 13 },
+      { id: "kitsune_boss", x: 15, y: 6, boss: "kitsune" },
+    ],
+    portals: [{ x: 15, y: 21, to: "bamboo", tx: 16, ty: 2 }],
+    spawn: { x: 15, y: 20 },
+  },
+
+  cave: {
+    id: "cave", name: "ถ้ำหินคุระ",
+    encounters: [{ enemy: "cave_moth", weight: 4 }, { enemy: "stone_ari", weight: 2 }],
+    grid: buildMap({
+      W: 32, H: 24, base: 5, border: 6, seed: 111,
+      clusters: [{ tile: 6, blobs: 12, radius: 2 }],
+      spawn: [2, 12],
+      clear: [[1, 12], [2, 12], [16, 12], [24, 6], [8, 18]],
+      connect: [[1, 12], [16, 12], [24, 6], [8, 18]],
+    }),
+    npcs: [{ id: "sora", x: 24, y: 6 }],
+    portals: [{ x: 1, y: 12, to: "field", tx: 29, ty: 12 }],
+    spawn: { x: 2, y: 12 },
+  },
+
+  coast: {
+    id: "coast", name: "หมู่บ้านชายฝั่งอิโซนามิ", town: true, encounters: [],
+    grid: buildMap({
+      W: 32, H: 24, base: 3, border: 6, seed: 122,
+      rects: [[3, 3, 8, 6, 6], [24, 3, 29, 6, 6], [2, 18, 30, 22, 2]],
+      clusters: [{ tile: 2, blobs: 4, radius: 2 }],
+      ground: [[0, 0.05]],
+      spawn: [28, 12],
+      clear: [[29, 12], [28, 12], [30, 12], [11, 6], [21, 6], [16, 12], [8, 15], [24, 15]],
+      connect: [[29, 12], [11, 6], [21, 6], [16, 12], [8, 15], [24, 15]],
+    }),
+    npcs: [
+      { id: "fisher", x: 11, y: 6 }, { id: "miko2", x: 21, y: 6 },
+      { id: "sora", x: 16, y: 12 }, { id: "board2", x: 8, y: 15 },
+    ],
+    portals: [{ x: 30, y: 12, to: "town", tx: 2, ty: 12 }],
+    spawn: { x: 28, y: 12 },
   },
 };
 

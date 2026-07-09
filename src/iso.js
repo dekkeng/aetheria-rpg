@@ -361,6 +361,13 @@ Iso.syncPlayer = function (dt) {
   }
 };
 
+/* NPC ที่ไม่มีสไปรต์เฉพาะ -> ยืมสไปรต์ NPC ที่มีอยู่ให้ดูหลากหลาย */
+Iso.NPC_ALIAS = {
+  taro: "merchant", hana: "healer", kenji: "grimm", yuki: "pip", board: "guard",
+  fisher: "merchant", miko2: "healer", sora: "guard", board2: "guard",
+  kaede: "elder", inari: "maeve",
+};
+
 /* ---------- NPC + บอสบนแมพ ---------- */
 Iso.syncNpcs = function () {
   const sc = Iso.scene;
@@ -377,7 +384,7 @@ Iso.syncNpcs = function () {
         spr = sc.add.sprite(0, 0, "enemy_" + npc.boss, 0);
         spr.setOrigin(0.5, 0.8);
       } else {
-        const nid = Iso.TD.npcs[npc.id] ? npc.id : "elder";
+        const nid = Iso.TD.npcs[npc.id] ? npc.id : (Iso.NPC_ALIAS[npc.id] || "elder");
         spr = sc.add.sprite(0, 0, "npc_" + nid, 0);
         spr.setOrigin(0.5, 0.78);
       }

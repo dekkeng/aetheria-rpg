@@ -15,6 +15,10 @@ Art.zoneMood = {
   mistfen:    { a: "#182a26", b: "#0a1512", glow: "#57c9a0" },
   frostspire: { a: "#20304a", b: "#0b1220", glow: "#8fc4ff" },
   citadel:    { a: "#241830", b: "#0c0714", glow: "#b061ff" },
+  bamboo:     { a: "#1f331f", b: "#0a140a", glow: "#7fd06b" },
+  shrine:     { a: "#33261f", b: "#160f0a", glow: "#ff9a5c" },
+  cave:       { a: "#241f2e", b: "#0c0a14", glow: "#8f7cc4" },
+  coast:      { a: "#1a2c3a", b: "#0a1420", glow: "#5cc4e0" },
 };
 
 Art.applyZoneMood = function (mapId) {

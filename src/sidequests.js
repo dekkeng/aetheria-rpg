@@ -54,6 +54,40 @@ SideQuests.DEFS = {
     nudge: [{ s: "เด็กหญิงยูกิจัง", t: "ยังไม่ครบ 3 ลูกเลย เจ้าเหมียวยังหิวอยู่นะ~" }],
     done: [{ s: "เด็กหญิงยูกิจัง", t: "เย้! เจ้าเหมียวอิ่มแล้ว มันขอบคุณพี่ด้วยเหมียว~ 🐱" }],
   },
+  // ---- โซนแตกแขนง ----
+  kaede_kodama: {
+    giver: "kaede", title: "วิญญาณป่าไผ่", npc: "นักสะสมคาเอเดะ",
+    type: "hunt", target: "kodama", need: 5,
+    reward: { gold: 70, exp: 45, item: "hi_potion", qty: 2 }, repeat: true, requireLevel: 2,
+    offer: [
+      { s: "นักสะสมคาเอเดะ", t: "โอ้ นักเดินทาง! ป่าไผ่ซาซะแห่งนี้มีโคดามะน้อยชุกชุมเหลือเกิน" },
+      { s: "นักสะสมคาเอเดะ", t: "ข้าอยากศึกษามัน ช่วยปราบสัก 5 ตัวเก็บตัวอย่างมาให้หน่อยสิ" },
+    ],
+    nudge: [{ s: "นักสะสมคาเอเดะ", t: "โคดามะยังไม่ครบ 5 ตัวนะ ในป่าไผ่ซาซะมีเยอะเลย" }],
+    done: [{ s: "นักสะสมคาเอเดะ", t: "สมบูรณ์แบบ! ตัวอย่างพวกนี้มีค่ามาก รับรางวัลไปเลย" }],
+  },
+  sora_fish: {
+    giver: "sora", title: "ปีกผีเสื้อราตรี", npc: "กะลาสีโซระ",
+    type: "collect", item: "wolf_fang", need: 2,
+    reward: { gold: 80, item: "town_scroll", qty: 1 }, repeat: true, requireLevel: 4,
+    offer: [
+      { s: "กะลาสีโซระ", t: "ยะโฮ่ นักผจญภัย! ข้าทำเหยื่อตกปลาพิเศษ ต้องใช้เขี้ยวสัตว์" },
+      { s: "กะลาสีโซระ", t: "หาเขี้ยว (จากทานุกิ/อินุงามิ) มาให้ข้า 2 ชิ้นสิ ข้าจะให้โอฟุดะเรียกกลับตอบแทน" },
+    ],
+    nudge: [{ s: "กะลาสีโซระ", t: "เขี้ยวยังไม่ครบ 2 ชิ้นเลยนายท่าน" }],
+    done: [{ s: "กะลาสีโซระ", t: "เยี่ยม! เหยื่อชุดนี้ปลาต้องติดเพียบแน่ ขอบใจมาก" }],
+  },
+  inari_ari: {
+    giver: "inari", title: "ชำระถ้ำต้องสาป", npc: "นักบวชศาลเจ้าอินาริ",
+    type: "hunt", target: "stone_ari", need: 4,
+    reward: { gold: 150, exp: 90, item: "iron_armor", qty: 1 }, repeat: true, requireLevel: 6,
+    offer: [
+      { s: "นักบวชศาลเจ้าอินาริ", t: "มดหินยักษ์ในถ้ำหินคุระรบกวนพลังศักดิ์สิทธิ์ของศาลเจ้า" },
+      { s: "นักบวชศาลเจ้าอินาริ", t: "โปรดช่วยชำระล้างมันสัก 4 ตัว เพื่อสันติของคิสึเนะผู้พิทักษ์" },
+    ],
+    nudge: [{ s: "นักบวชศาลเจ้าอินาริ", t: "มดหินยักษ์ยังเหลืออยู่ ถ้ำหินคุระอยู่ทางตะวันออกของทุ่งอาโอบะ" }],
+    done: [{ s: "นักบวชศาลเจ้าอินาริ", t: "ศาลเจ้าสงบลงแล้ว ขอพรอินาริคุ้มครองการเดินทางของท่าน" }],
+  },
 };
 
 SideQuests.byGiver = function (giver) {
@@ -76,7 +110,7 @@ SideQuests.isComplete = function (p, id) {
 SideQuests.interact = function (giverId) {
   const p = State.player;
   SideQuests.ensure(p);
-  if (giverId === "board") { SideQuests.openBoard(p); return true; }
+  if (giverId === "board" || giverId === "board2") { SideQuests.openBoard(p); return true; }
   const id = SideQuests.byGiver(giverId);
   if (!id) return false;
   const def = SideQuests.DEFS[id];
