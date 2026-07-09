@@ -15,21 +15,24 @@ Source sheets are kept in `assets/vendor/*/Tilemap/tilemap_packed.png`.
 
 CC0 requires no attribution, but credit is included here as good practice.
 
-## Flare (flare-game) — CC-BY-SA 3.0
+## Zelda-like tilesets and sprites — CC0 1.0
 
-Isometric world art — tilesets (grassland, cave, dungeon, snowplains),
-hero/equipment paper-doll layers, NPC and enemy sprites — is adapted from
-**Flare: Empyrean Campaign** (https://github.com/flareteam/flare-game),
-art by **Clint Bellanger** and the Flare team,
-licensed under **Creative Commons Attribution-ShareAlike 3.0**
-(https://creativecommons.org/licenses/by-sa/3.0/).
+World tiles (grass, water, cliffs, trees, paths) are adapted from
+**"Zelda-like tilesets and sprites"** by **ArMM1998**
+(https://opengameart.org/content/zelda-like-tilesets-and-sprites), CC0.
+Source kept in `assets/vendor/zelda-like/`; recomposed (upscaled x3,
+some color tints for snow/ice/lava/cave) by `tools/build_topdown.py`
+into `assets/sprites/td/tiles.png`.
 
-- Source atlases are fetched into `assets/vendor/flare/` by `tools/fetch_flare.py`
-  (not committed — ~150 MB).
-- `tools/build_flare_sheets.py` and `tools/build_flare_tiles.py` recompose them
-  into the game's sheets under `assets/sprites/flare/`.
-- Changes made: frame extraction/re-gridding, downscaling, color tints,
-  and repacking into atlases. These derived sheets remain **CC-BY-SA 3.0**.
+## Ninja Adventure Asset Pack — CC0 1.0
+
+Player characters, NPCs, monsters, bosses, pets, and face portraits are
+from the **Ninja Adventure Asset Pack** by **Pixel-boy and AAA**
+(https://pixel-boy.itch.io/ninja-adventure-asset-pack), CC0.
+Attribution is not required but appreciated — thanks for this fantastic pack!
+Source is fetched into `assets/vendor/ninja-adventure-pack/` by
+`tools/fetch_topdown_packs.py` (not committed — ~57 MB);
+`tools/build_topdown.py` recomposes it into `assets/sprites/td/`.
 
 ## Phaser 3 — MIT
 

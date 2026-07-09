@@ -21,5 +21,8 @@ Thumbs.db
 # Local Claude settings
 .claude/settings.local.json
 
-# Flare source atlases (ใหญ่ ~150MB — โหลดใหม่ได้ด้วย tools/fetch_flare.py)
+# Source asset packs ขนาดใหญ่ — โหลดใหม่ได้ด้วยสคริปต์ใน tools/
+# (flare: tools/fetch_flare.py — เลิกใช้แล้ว / NA: tools/fetch_topdown_packs.py)
 assets/vendor/flare/
+assets/vendor/ninja-adventure-pack/
+assets/vendor/ninja-adventure/

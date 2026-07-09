@@ -1,122 +1,92 @@
 /* ============================================================
- * Aetheria RPG — Sprite Engine
- * โหลด sprite sheet, จัดการ animation (idle หายใจ / เดิน),
- * วาดฮีโร่/มอนสเตอร์/ทายล์ลง canvas, และไอคอนไอเทมใน DOM
+ * Aetheria RPG — Sprite Engine (Ninja Adventure art)
+ * โลก top-down ใช้ Phaser (iso.js) — โมดูลนี้ดูแลฉากต่อสู้ (canvas)
+ * + พอร์เทรตหน้า (Faceset) + ไอคอนไอเทม (items.png pixel เดิม)
  * ========================================================== */
 
 const Sprites = {
   ready: false,
-  man: null,          // manifest
-  img: {},            // ชื่อ -> HTMLImageElement
+  man: null,          // manifest เดิม (items/pets icon เมนูยังใช้)
+  TD: null,           // TD_MANIFEST
+  img: {},            // key -> HTMLImageElement
   t0: performance.now(),
-  loopCb: null,
 };
 
 Sprites.now = function () { return performance.now() - Sprites.t0; };
 
-/* เฟรม idle: สลับช้าๆ (หายใจ) */
-Sprites.idleFrame = function (frames) {
-  const seq = frames || [0, 1];
-  const i = Math.floor(Sprites.now() / 480) % seq.length;
-  return seq[i];
-};
-/* เฟรมเดิน: สลับเร็ว */
-Sprites.walkFrame = function (frames) {
-  const seq = frames || [2, 0, 3, 0];
-  const i = Math.floor(Sprites.now() / 130) % seq.length;
-  return seq[i];
-};
-
-/* โหลด sheet ทั้งหมด */
+/* ---------- โหลด sheet ที่ฉากต่อสู้ใช้ ---------- */
 Sprites.load = function (done) {
   Sprites.man = window.SPRITE_MANIFEST;
-  const files = ["heroes", "weapons", "armor", "helmets", "shields", "legs", "boots", "enemies", "items", "tiles", "npcs", "pets"];
-  let left = files.length;
-  files.forEach((name) => {
+  Sprites.TD = window.TD_MANIFEST;
+  const TD = Sprites.TD;
+  const jobs = [["items", "assets/sprites/items.png"]];
+  if (TD) {
+    Object.keys(TD.heroes).forEach((c) =>
+      jobs.push(["hero_" + c, "assets/sprites/td/" + TD.heroes[c].file]));
+    Object.keys(TD.enemies).forEach((e) =>
+      jobs.push(["enemy_" + e, "assets/sprites/td/" + TD.enemies[e].file]));
+    Object.keys(TD.pets).forEach((p) =>
+      jobs.push(["pet_" + p, "assets/sprites/td/" + TD.pets[p].file]));
+  }
+  let left = jobs.length;
+  const one = () => { if (--left === 0) { Sprites.ready = true; done && done(); } };
+  jobs.forEach(([key, src]) => {
     const im = new Image();
-    im.onload = () => { if (--left === 0) { Sprites.ready = true; done && done(); } };
-    im.onerror = () => { if (--left === 0) { Sprites.ready = true; done && done(); } };
-    im.src = "assets/sprites/" + name + ".png";
-    Sprites.img[name] = im;
+    im.onload = one; im.onerror = one;
+    im.src = src;
+    Sprites.img[key] = im;
   });
 };
 
-/* ---------- วาดฮีโร่ลง canvas ----------
- * ctx, class, dir, dx, dy (มุมซ้ายบนของช่อง), size, moving */
-Sprites.drawHero = function (ctx, cls, dir, dx, dy, size, moving, equip) {
-  if (!Sprites.ready) return false;
-  const H = Sprites.man.heroes;
-  const row = H.rows[cls + "_" + dir];
-  if (row === undefined) return false;
-  const frame = moving ? Sprites.walkFrame(H.walk) : Sprites.idleFrame(H.idle);
-  const c = H.cell;
+/* วาดเฟรมจาก sheet ลง canvas ให้พอดีกล่อง size (คงสัดส่วน, กึ่งกลาง-ล่าง) */
+Sprites.drawCell = function (ctx, key, cell, col, row, dx, dy, size) {
+  const img = Sprites.img[key];
+  if (!img || !img.complete || !img.naturalWidth) return false;
+  const scale = size / cell;
+  const w = cell * scale, h = cell * scale;
   ctx.imageSmoothingEnabled = false;
-  // ฮีโร่ chibi: สูงกว่า tile นิดเดียว (มินิ) จัดให้เท้าอยู่ล่างของช่อง
-  const drawSize = size * 1.3;
-  const ox = dx + (size - drawSize) / 2;
-  const oy = dy + size - drawSize + size * 0.12;
-  ctx.drawImage(Sprites.img.heroes, frame * c, row * c, c, c, ox, oy, drawSize, drawSize);
-  // ---- ชุด/อาวุธที่สวมใส่ (overlay แนบเฟรมเดียวกัน) ----
-  // ---- ชั้นอุปกรณ์สวมใส่ (ล่างไปบน) ----
-  const eq = equip || {};
-  Sprites.drawGear(ctx, "legs", eq.legs, dir, frame, ox, oy, drawSize);
-  Sprites.drawGear(ctx, "boots", eq.boots, dir, frame, ox, oy, drawSize);
-  Sprites.drawGear(ctx, "armor", eq.body, dir, frame, ox, oy, drawSize);
-  Sprites.drawGear(ctx, "weapons", eq.hand_r, dir, frame, ox, oy, drawSize);
-  Sprites.drawGear(ctx, "shields", eq.hand_l, dir, frame, ox, oy, drawSize);
-  Sprites.drawGear(ctx, "helmets", eq.head, dir, frame, ox, oy, drawSize);
-  return true;   // คืน true เพื่อให้ผู้เรียกรู้ว่าวาด sprite สำเร็จ (ไม่ต้อง fallback emoji)
-};
-
-/* วาด overlay อุปกรณ์ (เกราะ/อาวุธ) ทับตัวฮีโร่ ตำแหน่ง/เฟรมตรงกับฐาน */
-Sprites.drawGear = function (ctx, kind, itemId, dir, frame, ox, oy, drawSize) {
-  if (!itemId) return;
-  const G = Sprites.man[kind];
-  if (!G) return;
-  const row = G.rows[itemId + "_" + dir];
-  if (row === undefined) return;         // ไอเทมนี้ไม่มีภาพสวมใส่ (เช่นเกราะระดับที่ยังไม่ทำ)
-  const c = G.cell;
-  ctx.drawImage(Sprites.img[kind], frame * c, row * c, c, c, ox, oy, drawSize, drawSize);
-};
-
-/* วาดฮีโร่แบบเต็มช่อง (ใช้ในฉากต่อสู้ — เติมเต็ม canvas) */
-Sprites.drawHeroBattle = function (ctx, cls, dir, size, equip) {
-  if (!Sprites.ready) return;
-  const H = Sprites.man.heroes;
-  dir = dir || "right";
-  const row = H.rows[cls + "_" + dir];
-  if (row === undefined) return;
-  const frame = Sprites.idleFrame(H.idle);   // หายใจอยู่กับที่
-  const c = H.cell;
-  ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(Sprites.img.heroes, frame * c, row * c, c, c, 0, 0, size, size);
-  const eq = equip || {};
-  Sprites.drawGear(ctx, "legs", eq.legs, dir, frame, 0, 0, size);
-  Sprites.drawGear(ctx, "boots", eq.boots, dir, frame, 0, 0, size);
-  Sprites.drawGear(ctx, "armor", eq.body, dir, frame, 0, 0, size);
-  Sprites.drawGear(ctx, "weapons", eq.hand_r, dir, frame, 0, 0, size);
-  Sprites.drawGear(ctx, "shields", eq.hand_l, dir, frame, 0, 0, size);
-  Sprites.drawGear(ctx, "helmets", eq.head, dir, frame, 0, 0, size);
-};
-
-/* วาดมอนสเตอร์ (idle) — ใช้ทั้งบนแผนที่และในฉากต่อสู้
- * enemyId จะ map ผ่าน enemy.spr ถ้ามี, ไม่งั้นลองใช้ id ตรงๆ
- * คืน true ถ้าวาด pixel sprite ได้ (false = ให้ผู้เรียก fallback เป็น emoji) */
-Sprites.drawEnemy = function (ctx, enemyId, dx, dy, size) {
-  if (!Sprites.ready) return false;
-  const E = Sprites.man.enemies;
-  const en = (typeof GameData !== "undefined") ? GameData.enemies[enemyId] : null;
-  const kind = (en && en.spr) ? en.spr : enemyId;
-  const row = E.rows[kind];
-  if (row === undefined) return false;
-  const frame = Sprites.idleFrame(E.idle);
-  const c = E.cell;
-  ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(Sprites.img.enemies, frame * c, row * c, c, c, dx, dy, size, size);
+  ctx.drawImage(img, col * cell, row * cell, cell, cell,
+    dx + (size - w) / 2, dy + size - h, w, h);
   return true;
 };
 
-/* วาด emoji แทนสไปรต์ (fallback) พร้อมขยับเบาๆ ให้ดูมีชีวิต */
+/* ---------- ศัตรูในฉากต่อสู้ — คืน true ถ้าวาดได้ ---------- */
+Sprites.drawEnemy = function (ctx, enemyId, dx, dy, size) {
+  if (!Sprites.ready || !Sprites.TD) return false;
+  const meta = Sprites.TD.enemies[enemyId];
+  if (!meta) return false;
+  const key = "enemy_" + enemyId;
+  if (meta.boss) {
+    // บอส: แถวเดียว วนเฟรม
+    const f = Math.floor(Sprites.now() / 240) % meta.frames;
+    return Sprites.drawCell(ctx, key, meta.cell, f, 0, dx, dy, size);
+  }
+  // มอนสเตอร์: 4 ทิศ x 4 เฟรม — หันซ้าย (col 2) เข้าหาฮีโร่, วนเฟรมช้า
+  const row = Math.floor(Sprites.now() / 320) % 4;
+  return Sprites.drawCell(ctx, key, meta.cell, 2, row, dx, dy, size);
+};
+
+/* ---------- ฮีโร่ในฉากต่อสู้ (หันขวาเข้าหาศัตรู) ---------- */
+Sprites.drawHeroBattle = function (ctx, cls, dir, size, equip) {
+  if (!Sprites.ready || !Sprites.TD) return;
+  const TD = Sprites.TD;
+  const key = "hero_" + (TD.heroes[cls] ? cls : "warrior");
+  // เฟรม idle (แถว 0) ทิศขวา (col 3) + ก้าวเท้าเบาๆ เป็นจังหวะหายใจ
+  const step = Math.floor(Sprites.now() / 640) % 2;
+  const row = step === 0 ? 0 : 1;
+  Sprites.drawCell(ctx, key, TD.cell, 3, row, 0, 0, size);
+};
+
+/* ---------- สัตว์เลี้ยงในฉากต่อสู้ ---------- */
+Sprites.drawPet = function (ctx, species, dx, dy, size) {
+  if (!Sprites.ready || !Sprites.TD) return false;
+  const meta = Sprites.TD.pets[species];
+  if (!meta) return false;
+  const row = Math.floor(Sprites.now() / 300) % 4;
+  return Sprites.drawCell(ctx, "pet_" + species, meta.cell, 3, row, dx, dy, size);
+};
+
+/* วาด emoji แทนสไปรต์ (fallback) */
 Sprites.drawEmoji = function (ctx, glyph, cx, cy, fontPx) {
   const bob = Math.sin(Sprites.now() / 360) * (fontPx * 0.04);
   ctx.font = `${fontPx}px serif`;
@@ -125,93 +95,24 @@ Sprites.drawEmoji = function (ctx, glyph, cx, cy, fontPx) {
   ctx.fillText(glyph, cx, cy + bob);
 };
 
-/* วาด NPC ลง canvas (idle) — คืน true ถ้าวาดสำเร็จ */
-Sprites.drawNpc = function (ctx, npcId, dx, dy, size) {
-  if (!Sprites.ready || !Sprites.man.npcs || !Sprites.img.npcs) return false;
-  const N = Sprites.man.npcs;
-  const row = N.rows[npcId];
-  if (row === undefined) return false;
-  const frame = Sprites.idleFrame(N.idle);
-  const c = N.cell;
-  ctx.imageSmoothingEnabled = false;
-  const drawSize = size * 1.3;
-  const ox = dx + (size - drawSize) / 2;
-  const oy = dy + size - drawSize + size * 0.12;
-  ctx.drawImage(Sprites.img.npcs, frame * c, row * c, c, c, ox, oy, drawSize, drawSize);
-  return true;
+/* ---------- พอร์เทรตหน้า (Faceset ของ Ninja Adventure) ---------- */
+Sprites.faceStyle = function (file, px) {
+  return `background-image:url('assets/sprites/td/faces/${file}.png');` +
+    `background-size:cover;background-position:center;image-rendering:pixelated;`;
 };
 
-/* CSS background style สำหรับพอร์เทรตฮีโร่ (ใช้ใน HUD) */
 Sprites.heroPortraitStyle = function (classId, px) {
-  if (!Sprites.man || !Sprites.man.heroes) return "";
-  const H = Sprites.man.heroes;
-  const row = H.rows[classId + "_down"];
-  if (row === undefined) return "";
-  px = px || 48;
-  const scale = px / H.cell;
-  const sheetW = H.frames * H.cell * scale;
-  const sheetH = Object.keys(H.rows).length * H.cell * scale;
-  return `background-image:url('assets/sprites/heroes.png');` +
-    `background-size:${sheetW}px ${sheetH}px;` +
-    `background-position:0 -${row * H.cell * scale}px;` +
-    `image-rendering:pixelated;`;
+  if (!Sprites.TD || !Sprites.TD.heroes[classId]) return "";
+  return Sprites.faceStyle("hero_" + classId, px || 48);
 };
 
-/* CSS background style สำหรับพอร์เทรต NPC (ใช้ในกล่องบทสนทนา) */
 Sprites.npcPortraitStyle = function (npcId, px) {
-  if (!Sprites.man || !Sprites.man.npcs) return "";
-  const N = Sprites.man.npcs;
-  const row = N.rows[npcId];
-  if (row === undefined) return "";
+  if (!Sprites.TD || !Sprites.TD.npcs[npcId]) return "";
   px = px || 56;
-  const scale = px / N.cell;
-  const sheetW = N.frames * N.cell * scale;
-  const sheetH = Object.keys(N.rows).length * N.cell * scale;
-  return `width:${px}px;height:${px}px;` +
-    `background-image:url('assets/sprites/npcs.png');` +
-    `background-size:${sheetW}px ${sheetH}px;` +
-    `background-position:0 -${row * N.cell * scale}px;` +
-    `image-rendering:pixelated;`;
+  return `width:${px}px;height:${px}px;` + Sprites.faceStyle("npc_" + npcId, px);
 };
 
-/* วาดทายล์แบบกำหนดกว้าง/สูงเอง (สำหรับต้นไม้ที่สูงเกินช่อง) */
-Sprites.drawTileSized = function (ctx, kind, dx, dy, w, h) {
-  if (!Sprites.ready || !Sprites.man.tiles || !Sprites.img.tiles) return false;
-  const Tt = Sprites.man.tiles;
-  const idx = Tt.map[kind];
-  if (idx === undefined) return false;
-  const c = Tt.cell;
-  ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(Sprites.img.tiles, idx * c, 0, c, c, dx, dy, w, h);
-  return true;
-};
-
-/* วาดสัตว์เลี้ยง (idle 2 เฟรม) — คืน true ถ้าวาดสำเร็จ */
-Sprites.drawPet = function (ctx, species, dx, dy, size) {
-  if (!Sprites.ready || !Sprites.man.pets || !Sprites.img.pets) return false;
-  const P = Sprites.man.pets;
-  const row = P.rows[species];
-  if (row === undefined) return false;
-  const frame = Sprites.idleFrame(P.idle);
-  const c = P.cell;
-  ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(Sprites.img.pets, frame * c, row * c, c, c, dx, dy, size, size);
-  return true;
-};
-
-/* วาดทายล์ */
-Sprites.drawTile = function (ctx, kind, dx, dy, size) {
-  if (!Sprites.ready) return false;
-  const Tt = Sprites.man.tiles;
-  const idx = Tt.map[kind];
-  if (idx === undefined) return false;
-  const c = Tt.cell;
-  ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(Sprites.img.tiles, idx * c, 0, c, c, dx, dy, size, size);
-  return true;
-};
-
-/* คืน CSS background style สำหรับไอคอนไอเทมใน DOM */
+/* ---------- ไอคอนไอเทมใน DOM (pixel เดิม) ---------- */
 Sprites.itemIconStyle = function (itemId, px) {
   const It = Sprites.man.items;
   const pos = It.map[itemId];
@@ -231,8 +132,7 @@ Sprites.itemIcon = function (itemId, px) {
   return `<span class="spr-item" style="${Sprites.itemIconStyle(itemId, px)}"></span>`;
 };
 
-/* ---------- ลูป animation ฉากต่อสู้ ----------
- * (โลก isometric มีลูปของ Phaser เอง — ที่นี่ดูแลเฉพาะ battle) */
+/* ---------- ลูป animation ฉากต่อสู้ ---------- */
 Sprites.startLoop = function () {
   function frame() {
     if (State.screen === "battle" && typeof Battle !== "undefined" && Battle.drawSprites) {
