@@ -83,6 +83,19 @@ Iso.init = function () {
       Iso.hintText = null;
       this.cameras.main.setRoundPixels(true);
       this.scale.on("resize", () => Iso.applyZoom());
+      // Phaser Scale.RESIZE ฟังแค่ resize ของ window — ตอนสลับไปฉากต่อสู้
+      // #world-stage หด 0px แล้วกลับมา (ไม่มี window resize) Phaser จะไม่รู้
+      // ต้องเฝ้าขนาด parent เองด้วย ResizeObserver แล้วสั่ง refresh
+      const stage = document.getElementById("world-stage");
+      if (stage && typeof ResizeObserver !== "undefined") {
+        const ro = new ResizeObserver(() => {
+          const w = stage.clientWidth, h = stage.clientHeight;
+          if (w > 0 && h > 0 && (Iso.game.scale.width !== w || Iso.game.scale.height !== h)) {
+            try { Iso.game.scale.resize(w, h); Iso.applyZoom(); } catch (e) {}
+          }
+        });
+        ro.observe(stage);
+      }
     }
     update(_time, dt) {
       Iso.tick(dt);
@@ -115,8 +128,24 @@ Iso.init = function () {
   }, 1200);
 };
 
+/* เรียกตอนสลับมาหน้า world — ดันให้ Phaser วัดขนาด parent ใหม่
+ * (ลองซ้ำหลายรอบเผื่อ layout ยังไม่นิ่ง จนกว่าจะได้ขนาด > 0) */
 Iso.onShow = function () {
-  if (Iso.game) setTimeout(() => { try { Iso.game.scale.refresh(); } catch (e) {} }, 30);
+  if (!Iso.game) return;
+  let tries = 0;
+  const nudge = () => {
+    tries++;
+    const stage = document.getElementById("world-stage");
+    const w = stage ? stage.clientWidth : 0, h = stage ? stage.clientHeight : 0;
+    try {
+      if (w > 0 && h > 0) { Iso.game.scale.resize(w, h); Iso.applyZoom(); }
+      else Iso.game.scale.refresh();
+    } catch (e) {}
+    if ((w === 0 || h === 0 || Iso.game.scale.width === 0) && tries < 12) {
+      requestAnimationFrame(nudge);
+    }
+  };
+  requestAnimationFrame(nudge);
 };
 
 /* ---------- อัปเดตต่อเฟรม ---------- */
