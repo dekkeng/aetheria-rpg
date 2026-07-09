@@ -60,6 +60,9 @@ Iso.init = function () {
         this.load.spritesheet("pet_" + p, base + m.file,
           { frameWidth: m.cell, frameHeight: m.cell });
       });
+      Object.keys(TD.gear || {}).forEach((g) =>
+        this.load.spritesheet("gear_" + g, base + TD.gear[g].file,
+          { frameWidth: TD.cell, frameHeight: TD.cell }));
       this.load.image("tiles_atlas", base + "tiles.png");
     }
     create() {
@@ -193,12 +196,24 @@ Iso.buildMap = function () {
   Iso.ent.npcs.clear();
   Iso.ent.others.forEach((o) => o.destroy());
   Iso.ent.others.clear();
-  if (Iso.playerSpr) { Iso.playerSpr.destroy(); Iso.playerSpr = null; }
+  if (Iso.playerCont) { Iso.playerCont.destroy(); Iso.playerCont = null; }
   if (Iso.petSprite) { Iso.petSprite.destroy(); Iso.petSprite = null; }
   Iso.bubblePool.forEach((b) => b.root.destroy());
   Iso.bubblePool.clear();
 
   const rows = map.grid.length, cols = map.grid[0].length;
+
+  // ช่องที่ต้องเห็นชัด (NPC/พอร์ทัล) + วงรอบ — ห้ามต้นไม้บัง
+  const clearCanopy = new Set();
+  const protect = (x, y) => {
+    // ต้นไม้ที่ฐานอยู่แถว y หรือ y+1 (คอลัมน์ ±1) จะยื่นพุ่มมาคลุมช่อง (x,y)
+    for (let dx = -1; dx <= 1; dx++) {
+      clearCanopy.add((x + dx) + "," + y);
+      clearCanopy.add((x + dx) + "," + (y + 1));
+    }
+  };
+  (map.npcs || []).forEach((n) => protect(n.x, n.y));
+  (map.portals || []).forEach((pt) => protect(pt.x, pt.y));
 
   // พื้นฐานของแมพ (ทายล์เดินได้ที่พบมากสุด) รองใต้ต้นไม้/วัตถุ
   const count = {};
@@ -225,21 +240,24 @@ Iso.buildMap = function () {
         Iso.layers.floor.add(img);
       }
       if (isTree) {
+        // ถ้าพุ่มจะไปคลุม NPC/พอร์ทัล -> ปลูกพุ่มเตี้ยแทนต้นไม้ใหญ่ (ไม่บัง)
+        const blocks = clearCanopy.has(c + "," + r);
         const h = (((c * 40503) ^ (r * 24593)) >>> 0);
-        const okind = h % 6 === 0 ? "bush" : "tree";
+        const okind = blocks ? "bush" : (h % 6 === 0 ? "bush" : "tree");
         const ov = Iso.pickVariant(Iso.TD.objects, okind, c, r);
         const e = Iso.TD.objects[okind][ov];
         const img = sc.add.image(c * T + T / 2, r * T + T - e.h / 2, "tiles_atlas", okind + ":" + ov);
-        img.setDepth(1000 + (r + 1) * 10);      // depth ตามแถวฐาน
+        img.setDepth(1000 + r * 10 + 4);        // depth ตามแถวฐาน (ต่ำกว่า NPC แถวถัดไป)
         Iso.ent.objects.push(img);
       }
     }
   }
 
-  // พอร์ทัล: วงแหวนเรืองแสงบนพื้น (ล็อก = เทาหรี่)
+  // พอร์ทัล: วงแหวนเรืองแสงบนพื้น — depth ตามแถว (ต่ำกว่าตัวละครบนช่องเดียวกัน
+  // เล็กน้อย แต่สูงกว่าพุ่มไม้แถวบน) กันไม่ให้ต้นไม้ทับ
   (map.portals || []).forEach((pt) => {
     const img = sc.add.image(pt.x * T + T / 2, pt.y * T + T / 2, "tiles_atlas", "portal:0");
-    img.setDepth(1);
+    img.setDepth(1000 + pt.y * 10 + 2);
     if (pt.lock) { img.setTint(0x9090a8); img.setAlpha(0.75); }
     img._pulse = !pt.lock;
     Iso.ent.portals.push(img);
@@ -258,29 +276,88 @@ Iso.applyZoom = function () {
   sc.cameras.main.setZoom(z);
 };
 
+/* ---------- ตัวละคร + เลเยอร์อุปกรณ์ ----------
+ * container = ฐาน + ชิ้นเกราะ (ล่างไปบน) วาดเฟรมเดียวกันหมด */
+Iso.GEAR_ORDER = ["legs", "boots", "body", "hand_l", "hand_r", "head"];
+
+Iso.makeChar = function (texKey, equip) {
+  const sc = Iso.scene;
+  const cont = sc.add.container(0, 0);
+  const base = sc.add.sprite(0, 0, texKey, 0).setOrigin(0.5, 0.78);
+  cont.add(base);
+  cont._base = base;
+  cont._tex = texKey;
+  cont._gear = {};
+  Iso.GEAR_ORDER.forEach((slot) => {
+    const item = equip && equip[slot];
+    if (item && Iso.TD.gear && Iso.TD.gear[item]) {
+      const s = sc.add.sprite(0, 0, "gear_" + item, 0).setOrigin(0.5, 0.78);
+      cont.add(s);
+      cont._gear[slot] = { spr: s, item };
+    }
+  });
+  cont._equipSig = JSON.stringify(equip || {});
+  return cont;
+};
+
+/* อัปเดตเลเยอร์เมื่อสวม/ถอด/เปลี่ยนอาชีพ */
+Iso.refreshChar = function (cont, texKey, equip) {
+  const sig = texKey + "|" + JSON.stringify(equip || {});
+  if (cont._sig === sig) return;
+  cont._sig = sig;
+  if (cont._tex !== texKey) { cont._base.setTexture(texKey); cont._tex = texKey; }
+  const sc = Iso.scene;
+  Iso.GEAR_ORDER.forEach((slot) => {
+    const item = equip && equip[slot];
+    const has = item && Iso.TD.gear && Iso.TD.gear[item];
+    const cur = cont._gear[slot];
+    if (cur && (!has || cur.item !== item)) { cur.spr.destroy(); delete cont._gear[slot]; }
+    if (has && !cont._gear[slot]) {
+      const s = sc.add.sprite(0, 0, "gear_" + item, 0).setOrigin(0.5, 0.78);
+      cont.add(s);
+      // จัดลำดับชั้นตาม GEAR_ORDER + ฐาน (ฐานอยู่ล่างสุด)
+      cont._gear[slot] = { spr: s, item };
+      Iso.reorderChar(cont);
+    }
+  });
+};
+Iso.reorderChar = function (cont) {
+  cont.bringToTop(cont._base);
+  Iso.GEAR_ORDER.forEach((slot) => {
+    if (cont._gear[slot]) cont.bringToTop(cont._gear[slot].spr);
+  });
+};
+
+/* ตั้งเฟรมฐาน+เกราะพร้อมกัน */
+Iso.setCharFrame = function (cont, frame) {
+  cont._base.setFrame(frame);
+  Iso.GEAR_ORDER.forEach((slot) => {
+    if (cont._gear[slot]) cont._gear[slot].spr.setFrame(frame);
+  });
+};
+
+/* bob ตอนยืนเฉยๆ (หายใจ) — px ในโลก, ต่างเฟสต่อ entity */
+Iso.idleBob = function (phase) {
+  return Math.round(Math.sin(Iso.now() / 380 + (phase || 0)) * 1.6);
+};
+
 /* ---------- ผู้เล่น ---------- */
 Iso.syncPlayer = function (dt) {
   const p = State.player;
   World.ensurePos(p);
-  const sc = Iso.scene;
-  if (!Iso.playerSpr) {
-    const key = "hero_" + (Iso.TD.heroes[p.classId] ? p.classId : "warrior");
-    Iso.playerSpr = sc.add.sprite(0, 0, key, 0).setOrigin(0.5, 0.78);
-    Iso.playerSpr._cls = p.classId;
-  }
-  if (Iso.playerSpr._cls !== p.classId && Iso.TD.heroes[p.classId]) {
-    Iso.playerSpr.setTexture("hero_" + p.classId);
-    Iso.playerSpr._cls = p.classId;
-  }
+  const key = "hero_" + (Iso.TD.heroes[p.classId] ? p.classId : "warrior");
+  if (!Iso.playerCont) Iso.playerCont = Iso.makeChar(key, p.equip);
+  Iso.refreshChar(Iso.playerCont, key, p.equip);
   const moving = World.movingNow && !World.locked;
-  Iso.playerSpr.setFrame(Iso.charFrame(World.facing || "down", moving, 0));
+  Iso.setCharFrame(Iso.playerCont, Iso.charFrame(World.facing || "down", moving, 0));
   const pos = Iso.toScreen(p.fx, p.fy);
-  Iso.playerSpr.setPosition(pos.x, pos.y);
-  Iso.playerSpr.setDepth(1000 + p.fy * 10);
+  const bob = moving ? 0 : Iso.idleBob(0);
+  Iso.playerCont.setPosition(pos.x, pos.y - bob);
+  Iso.playerCont.setDepth(1000 + p.fy * 10);
   const cam = Iso.scene.cameras.main;
-  if (cam._followTarget !== Iso.playerSpr) {
-    cam.startFollow(Iso.playerSpr, true, 0.12, 0.12);
-    cam._followTarget = Iso.playerSpr;
+  if (cam._followTarget !== Iso.playerCont) {
+    cam.startFollow(Iso.playerCont, true, 0.12, 0.12);
+    cam._followTarget = Iso.playerCont;
   }
 };
 
@@ -320,10 +397,13 @@ Iso.syncNpcs = function () {
       // บอส: วนเฟรม idle ของบอส
       const f = Math.floor(Iso.now() / 240 + ent.phase) % ent.meta.frames;
       ent.spr.setFrame(f);
+      ent.spr.setY(Iso.idleBob(ent.phase));
     } else {
-      // NPC: เฟรม idle + โยกเล็กน้อยให้มีชีวิต
-      ent.spr.setFrame(0);
-      ent.spr.setY(Math.sin(Iso.now() / 480 + ent.phase) > 0.6 ? -1 : 0);
+      // NPC: หายใจ (idle bob) ตลอดเวลา — สลับ idle/เดินช้าๆ ให้ดูมีชีวิต
+      const walkCol = Iso.charFrame("down", true, ent.phase);
+      const breathe = Math.floor(Iso.now() / 620 + ent.phase) % 2;
+      ent.spr.setFrame(breathe === 0 ? 0 : walkCol);
+      ent.spr.setY(Iso.idleBob(ent.phase));
     }
     const m = Iso.npcMark(npc);
     if (m) {
@@ -358,21 +438,20 @@ Iso.syncOthers = function (dt) {
   list.forEach((o) => {
     seen.add(o.id);
     let ent = Iso.ent.others.get(o.id);
+    const key = "hero_" + (Iso.TD.heroes[o.cls] ? o.cls : "warrior");
     if (!ent) {
-      const cont = sc.add.container(0, 0);
-      const key = "hero_" + (Iso.TD.heroes[o.cls] ? o.cls : "warrior");
-      const spr = sc.add.sprite(0, 0, key, 0).setOrigin(0.5, 0.78);
-      cont.add(spr);
+      const cont = Iso.makeChar(key, Iso.netEquip(o));
       const label = sc.add.text(0, -T * 0.95, o.name || "?", {
         fontFamily: "Kanit, sans-serif", fontSize: "13px", fontStyle: "600",
         color: "#c9bfff", backgroundColor: "rgba(10,9,22,0.72)", padding: { x: 5, y: 2 },
       }).setOrigin(0.5, 1);
       cont.add(label);
-      ent = { root: cont, spr, label, dx: o.x + 0.5, dy: o.y + 0.5, dir: "down", lastX: o.x, lastY: o.y };
+      ent = { root: cont, label, dx: o.x + 0.5, dy: o.y + 0.5, dir: "down", lastX: o.x, lastY: o.y, phase: (o.x * 5 + o.y * 3) % 4 };
       cont.setPosition(ent.dx * T, ent.dy * T);
       Iso.ent.others.set(o.id, ent);
       ent.destroy = () => cont.destroy();
     }
+    Iso.refreshChar(ent.root, key, Iso.netEquip(o));
     const tx = o.x + 0.5, ty = o.y + 0.5;
     if (o.x !== ent.lastX || o.y !== ent.lastY) {
       const dx = o.x - ent.lastX, dy = o.y - ent.lastY;
@@ -382,8 +461,9 @@ Iso.syncOthers = function (dt) {
     const k = Math.min(1, dt / 140);
     ent.dx += (tx - ent.dx) * k; ent.dy += (ty - ent.dy) * k;
     const moving = Math.abs(tx - ent.dx) + Math.abs(ty - ent.dy) > 0.05;
-    ent.spr.setFrame(Iso.charFrame(ent.dir, moving, 1));
-    ent.root.setPosition(ent.dx * T, ent.dy * T);
+    Iso.setCharFrame(ent.root, Iso.charFrame(ent.dir, moving, 1));
+    const bob = moving ? 0 : Iso.idleBob(ent.phase);
+    ent.root.setPosition(ent.dx * T, ent.dy * T - bob);
     ent.root.setDepth(1000 + ent.dy * 10);
   });
   Iso.ent.others.forEach((ent, id) => {
@@ -408,11 +488,16 @@ Iso.syncPet = function () {
     s._species = pet.species;
     Iso.petSprite = s;
   }
-  // วนเฟรมเดินช้าๆ (ทิศลง) ให้ดูมีชีวิต
+  // วนเฟรมเดินช้าๆ (ทิศลง) + bob ให้ดูมีชีวิตตลอด
   const f = (Math.floor(Iso.now() / 260) % 4) * 4;
   Iso.petSprite.setFrame(f);
-  Iso.petSprite.setPosition(World.petPos.x * T, World.petPos.y * T);
+  Iso.petSprite.setPosition(World.petPos.x * T, World.petPos.y * T - Iso.idleBob(2));
   Iso.petSprite.setDepth(1000 + World.petPos.y * 10 - 1);
+};
+
+/* equip ของผู้เล่นคนอื่น (multiplayer) -> map เป็นช่องเกราะ */
+Iso.netEquip = function (o) {
+  return { hand_r: o.weapon, body: o.armor, head: o.head, hand_l: o.offhand, legs: o.legs, boots: o.boots };
 };
 
 /* ---------- พอร์ทัลกะพริบ ---------- */

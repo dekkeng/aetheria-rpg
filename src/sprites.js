@@ -27,6 +27,8 @@ Sprites.load = function (done) {
       jobs.push(["enemy_" + e, "assets/sprites/td/" + TD.enemies[e].file]));
     Object.keys(TD.pets).forEach((p) =>
       jobs.push(["pet_" + p, "assets/sprites/td/" + TD.pets[p].file]));
+    Object.keys(TD.gear || {}).forEach((g) =>
+      jobs.push(["gear_" + g, "assets/sprites/td/" + TD.gear[g].file]));
   }
   let left = jobs.length;
   const one = () => { if (--left === 0) { Sprites.ready = true; done && done(); } };
@@ -66,7 +68,8 @@ Sprites.drawEnemy = function (ctx, enemyId, dx, dy, size) {
   return Sprites.drawCell(ctx, key, meta.cell, 2, row, dx, dy, size);
 };
 
-/* ---------- ฮีโร่ในฉากต่อสู้ (หันขวาเข้าหาศัตรู) ---------- */
+/* ---------- ฮีโร่ในฉากต่อสู้ (หันขวาเข้าหาศัตรู + อุปกรณ์สวมใส่) ---------- */
+Sprites.GEAR_ORDER = ["legs", "boots", "body", "hand_l", "hand_r", "head"];
 Sprites.drawHeroBattle = function (ctx, cls, dir, size, equip) {
   if (!Sprites.ready || !Sprites.TD) return;
   const TD = Sprites.TD;
@@ -75,6 +78,13 @@ Sprites.drawHeroBattle = function (ctx, cls, dir, size, equip) {
   const step = Math.floor(Sprites.now() / 640) % 2;
   const row = step === 0 ? 0 : 1;
   Sprites.drawCell(ctx, key, TD.cell, 3, row, 0, 0, size);
+  const eq = equip || {};
+  Sprites.GEAR_ORDER.forEach((slot) => {
+    const item = eq[slot];
+    if (item && TD.gear && TD.gear[item]) {
+      Sprites.drawCell(ctx, "gear_" + item, TD.cell, 3, row, 0, 0, size);
+    }
+  });
 };
 
 /* ---------- สัตว์เลี้ยงในฉากต่อสู้ ---------- */

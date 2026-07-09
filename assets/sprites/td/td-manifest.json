@@ -348,5 +348,75 @@
     "h": 96
    }
   ]
+ },
+ "gear": {
+  "wood_sword": {
+   "file": "gear_wood_sword.png",
+   "slot": "hand_r"
+  },
+  "iron_sword": {
+   "file": "gear_iron_sword.png",
+   "slot": "hand_r"
+  },
+  "flame_blade": {
+   "file": "gear_flame_blade.png",
+   "slot": "hand_r"
+  },
+  "frost_edge": {
+   "file": "gear_frost_edge.png",
+   "slot": "hand_r"
+  },
+  "mythril_bow": {
+   "file": "gear_mythril_bow.png",
+   "slot": "hand_r"
+  },
+  "leather_cap": {
+   "file": "gear_leather_cap.png",
+   "slot": "head"
+  },
+  "iron_helm": {
+   "file": "gear_iron_helm.png",
+   "slot": "head"
+  },
+  "wooden_shield": {
+   "file": "gear_wooden_shield.png",
+   "slot": "hand_l"
+  },
+  "tower_shield": {
+   "file": "gear_tower_shield.png",
+   "slot": "hand_l"
+  },
+  "leather_armor": {
+   "file": "gear_leather_armor.png",
+   "slot": "body"
+  },
+  "iron_armor": {
+   "file": "gear_iron_armor.png",
+   "slot": "body"
+  },
+  "dragon_mail": {
+   "file": "gear_dragon_mail.png",
+   "slot": "body"
+  },
+  "aether_robe": {
+   "file": "gear_aether_robe.png",
+   "slot": "body"
+  },
+  "padded_legs": {
+   "file": "gear_padded_legs.png",
+   "slot": "legs"
+  },
+  "iron_greaves": {
+   "file": "gear_iron_greaves.png",
+   "slot": "legs"
+  },
+  "leather_boots": {
+   "file": "gear_leather_boots.png",
+   "slot": "boots"
+  },
+  "swift_boots": {
+   "file": "gear_swift_boots.png",
+   "slot": "boots"
+  }
  }
 }
