@@ -367,6 +367,28 @@ UI.buildWorldMap = function (holder) {
     const m = GameData.maps[cv.dataset.mapid];
     if (m && typeof Minimap !== "undefined") Minimap.drawInto(cv, m, 88);
   });
+
+  // ย่อให้พอดีจอ: จอใหญ่พอ = เห็นเต็มไม่ต้อง scroll · จอเล็ก = ย่อไม่ต่ำกว่า MIN แล้ว scroll
+  const fitScale = () => {
+    const scroll = holder.parentElement;         // .worldmap-scroll
+    if (!scroll) return;
+    const availW = scroll.clientWidth - 20;
+    const availH = Math.max(200, window.innerHeight * 0.66);
+    const MIN = 0.5;
+    const fit = Math.min(1, availW / W, availH / H);
+    const scale = Math.max(MIN, fit);
+    const canvas = holder.querySelector(".wm-canvas");
+    canvas.style.transform = `scale(${scale})`;
+    canvas.style.transformOrigin = "top left";
+    holder.style.width = Math.ceil(W * scale) + "px";
+    holder.style.height = Math.ceil(H * scale) + "px";
+    holder.style.margin = "0 auto";
+  };
+  fitScale();
+  // ปรับใหม่เมื่อจอเปลี่ยนขนาด ระหว่างเปิดหน้าต่างแผนที่
+  UI._wmResize && window.removeEventListener("resize", UI._wmResize);
+  UI._wmResize = () => { if (document.getElementById("worldmap-holder") === holder) fitScale(); };
+  window.addEventListener("resize", UI._wmResize);
 };
 
 /* ประเมินเลเวลโซนจากมอนที่พบ (ไว้โชว์ในแผนที่โลก) */

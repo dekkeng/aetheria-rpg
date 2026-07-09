@@ -618,8 +618,8 @@ body {
   background: #0a0916; max-width: 100%; box-shadow: 0 4px 14px rgba(0,0,0,.4);
 }
 /* แผนที่โลก — thumbnail วางตามตำแหน่งจริง เชื่อมด้วยเส้นวาป */
-.worldmap-scroll { margin-top: 12px; max-height: 60vh; overflow: auto; padding: 10px; }
-.wm-canvas { position: relative; margin: 0 auto; }
+.worldmap-scroll { margin-top: 12px; max-height: 68vh; overflow: auto; padding: 10px; }
+.wm-canvas { position: relative; }
 .wm-lines { position: absolute; left: 0; top: 0; pointer-events: none; z-index: 0; }
 .wm-node {
   position: absolute; z-index: 1; text-align: center;
