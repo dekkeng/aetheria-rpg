@@ -261,7 +261,8 @@ UI.openMapView = function () {
       body = `<div class="map-full-wrap"><canvas id="map-full-canvas"></canvas></div>
         <p class="sub" style="text-align:center">${curMap.town ? "🏯 เขตปลอดภัย (ไม่มีมอนสเตอร์)" : "⚔️ มีมอนสเตอร์ — ระวังตัว"}</p>`;
     } else {
-      body = `<div class="worldmap-list">${UI.worldMapHtml()}</div>`;
+      body = `<div class="worldmap-scroll"><div id="worldmap-holder"></div></div>
+        <p class="sub" style="text-align:center">🏯 = เมือง (ปลอดมอน) · ⚔️ = โซนมอนสเตอร์ · เส้น = เส้นทางวาป</p>`;
     }
     UI.openOverlay(`
       <h2>🗺️ แผนที่</h2>
@@ -275,34 +276,97 @@ UI.openMapView = function () {
     if (tab === "zone") {
       const cv = UI.$("#map-full-canvas");
       if (cv && typeof Minimap !== "undefined") Minimap.drawInto(cv, curMap, 300);
+    } else {
+      UI.buildWorldMap(UI.$("#worldmap-holder"));
     }
   };
   render();
 };
 
-/* สร้างการ์ดแผนที่โลก — ไล่ตามกราฟพอร์ทัลจากเมืองเริ่มต้น */
-UI.worldMapHtml = function () {
+/* ทิศของพอร์ทัลเทียบขอบแมพ -> เวกเตอร์กริด [dx,dy] */
+UI._portalDir = function (map, pt) {
+  const H = map.grid.length, W = map.grid[0].length;
+  if (pt.y <= 1) return [0, -1];
+  if (pt.y >= H - 2) return [0, 1];
+  if (pt.x <= 1) return [-1, 0];
+  if (pt.x >= W - 2) return [1, 0];
+  return [0, 1];
+};
+
+/* วาง layout แต่ละโซนบนกริด ตามทิศจุดวาป (BFS จากเมืองเริ่มต้น) */
+UI.worldMapLayout = function () {
+  const pos = { town: { col: 0, row: 0 } };
+  const occ = new Set(["0,0"]);
+  const q = ["town"];
+  while (q.length) {
+    const id = q.shift();
+    const map = GameData.maps[id];
+    if (!map) continue;
+    (map.portals || []).forEach((pt) => {
+      if (!pt.to || pos[pt.to] || !GameData.maps[pt.to]) return;
+      const [dx, dy] = UI._portalDir(map, pt);
+      let c = pos[id].col + dx, r = pos[id].row + dy, guard = 0;
+      while (occ.has(c + "," + r) && guard < 10) { c += (dx || 1); r += dy; guard++; }
+      pos[pt.to] = { col: c, row: r }; occ.add(c + "," + r); q.push(pt.to);
+    });
+  }
+  let extra = Math.max(0, ...Object.values(pos).map((v) => v.row)) + 2;
+  Object.keys(GameData.maps).forEach((id) => { if (!pos[id]) { pos[id] = { col: 0, row: extra++ }; occ.add("0," + (extra - 1)); } });
+  return pos;
+};
+
+/* วาดแผนที่โลกเป็น thumbnail ต่อกันตามตำแหน่งจริง + เส้นเชื่อมจุดวาป */
+UI.buildWorldMap = function (holder) {
+  if (!holder) return;
   const p = State.player;
-  const order = [], seen = new Set();
-  const walk = (id) => {
-    if (!id || seen.has(id) || !GameData.maps[id]) return;
-    seen.add(id); order.push(id);
-    (GameData.maps[id].portals || []).forEach((pt) => walk(pt.to));
-  };
-  walk("town");
-  Object.keys(GameData.maps).forEach(walk);   // เผื่อแมพที่ไม่ต่อกับเมือง
-  return order.map((id) => {
+  const pos = UI.worldMapLayout();
+  const ids = Object.keys(pos);
+  const minCol = Math.min(...ids.map((i) => pos[i].col));
+  const minRow = Math.min(...ids.map((i) => pos[i].row));
+  const cols = Math.max(...ids.map((i) => pos[i].col)) - minCol + 1;
+  const rows = Math.max(...ids.map((i) => pos[i].row)) - minRow + 1;
+  const CW = 104, CH = 116, GX = 52, GY = 44;
+  const cellX = (c) => (c - minCol) * (CW + GX);
+  const cellY = (r) => (r - minRow) * (CH + GY);
+  const W = cols * CW + (cols - 1) * GX;
+  const H = rows * CH + (rows - 1) * GY;
+
+  // เส้นเชื่อม (ดีดup คู่) เป็น SVG ด้านหลัง
+  const seen = new Set();
+  let lines = "";
+  ids.forEach((id) => {
+    (GameData.maps[id].portals || []).forEach((pt) => {
+      if (!pos[pt.to]) return;
+      const key = [id, pt.to].sort().join("|");
+      if (seen.has(key)) return; seen.add(key);
+      const x1 = cellX(pos[id].col) + CW / 2, y1 = cellY(pos[id].row) + CH / 2;
+      const x2 = cellX(pos[pt.to].col) + CW / 2, y2 = cellY(pos[pt.to].row) + CH / 2;
+      const locked = !!pt.lock;
+      lines += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${locked ? '#7a6f4a' : '#69a0e0'}" stroke-width="3" stroke-dasharray="${locked ? '5 4' : '0'}"/>`;
+    });
+  });
+
+  let cards = "";
+  ids.forEach((id) => {
     const m = GameData.maps[id];
     const here = p.map === id;
-    const isTown = !!m.town;
-    const badge = isTown
-      ? `<span class="wm-badge town">🏯 เมือง · ปลอดมอน</span>`
-      : `<span class="wm-badge wild">⚔️ Lv.${UI.zoneLevel(m)} · มีมอน</span>`;
-    return `<div class="wm-card ${here ? "here" : ""}">
-        <div class="wm-name">${m.name}${here ? ' <b class="wm-you">(อยู่นี่)</b>' : ""}</div>
-        ${badge}
+    const badge = m.town ? "🏯 ปลอดมอน" : "⚔️ Lv." + UI.zoneLevel(m);
+    cards += `<div class="wm-node ${here ? "here" : ""} ${m.town ? "town" : "wild"}"
+        style="left:${cellX(pos[id].col)}px;top:${cellY(pos[id].row)}px;width:${CW}px">
+        <canvas class="wm-thumb" data-mapid="${id}"></canvas>
+        <div class="wm-node-name">${m.name}</div>
+        <div class="wm-node-badge">${badge}${here ? " · <b>อยู่นี่</b>" : ""}</div>
       </div>`;
-  }).join("");
+  });
+
+  holder.innerHTML = `<div class="wm-canvas" style="width:${W}px;height:${H}px">
+      <svg class="wm-lines" width="${W}" height="${H}">${lines}</svg>${cards}</div>`;
+
+  // วาด thumbnail แต่ละโซน
+  holder.querySelectorAll(".wm-thumb").forEach((cv) => {
+    const m = GameData.maps[cv.dataset.mapid];
+    if (m && typeof Minimap !== "undefined") Minimap.drawInto(cv, m, 88);
+  });
 };
 
 /* ประเมินเลเวลโซนจากมอนที่พบ (ไว้โชว์ในแผนที่โลก) */

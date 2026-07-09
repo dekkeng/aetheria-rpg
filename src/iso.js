@@ -399,10 +399,8 @@ Iso.syncNpcs = function () {
       ent.spr.setFrame(f);
       ent.spr.setY(Iso.idleBob(ent.phase));
     } else {
-      // NPC: หายใจ (idle bob) ตลอดเวลา — สลับ idle/เดินช้าๆ ให้ดูมีชีวิต
-      const walkCol = Iso.charFrame("down", true, ent.phase);
-      const breathe = Math.floor(Iso.now() / 620 + ent.phase) % 2;
-      ent.spr.setFrame(breathe === 0 ? 0 : walkCol);
+      // NPC: ยืนเฉยๆ เฟรมเดิม + ขยับขึ้นลงเบาๆ เหมือนหายใจ (ไม่ทำท่าเดิน)
+      ent.spr.setFrame(0);
       ent.spr.setY(Iso.idleBob(ent.phase));
     }
     const m = Iso.npcMark(npc);

@@ -617,17 +617,23 @@ body {
   image-rendering: pixelated; border: 2px solid var(--border); border-radius: 8px;
   background: #0a0916; max-width: 100%; box-shadow: 0 4px 14px rgba(0,0,0,.4);
 }
-.worldmap-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; max-height: 56vh; overflow-y: auto; }
-.wm-card {
-  display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px;
+/* แผนที่โลก — thumbnail วางตามตำแหน่งจริง เชื่อมด้วยเส้นวาป */
+.worldmap-scroll { margin-top: 12px; max-height: 60vh; overflow: auto; padding: 10px; }
+.wm-canvas { position: relative; margin: 0 auto; }
+.wm-lines { position: absolute; left: 0; top: 0; pointer-events: none; z-index: 0; }
+.wm-node {
+  position: absolute; z-index: 1; text-align: center;
+  background: rgba(20,18,42,.9); border: 2px solid var(--border); border-radius: 10px;
+  padding: 5px 4px 6px; box-shadow: 0 4px 12px rgba(0,0,0,.4);
 }
-.wm-card.here { border-color: var(--exp); box-shadow: 0 0 0 1px rgba(110,231,135,.35); }
-.wm-name { font-weight: 600; font-size: 14.5px; }
-.wm-you { color: var(--exp); font-size: 12px; }
-.wm-badge { font-size: 12px; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
-.wm-badge.town { color: #ffd76a; background: rgba(255,204,85,.14); border: 1px solid #ffd76a; }
-.wm-badge.wild { color: #ff9a8a; background: rgba(255,84,80,.13); border: 1px solid #ff8a7a; }
+.wm-node.town { border-color: #ffd76a; }
+.wm-node.wild { border-color: #7a6f9e; }
+.wm-node.here { box-shadow: 0 0 0 2px var(--exp), 0 4px 12px rgba(0,0,0,.5); }
+.wm-thumb { image-rendering: pixelated; display: block; margin: 0 auto; border-radius: 4px; background: #0a0916; max-width: 88px; }
+.wm-node-name { font-size: 12px; font-weight: 600; margin-top: 4px; line-height: 1.2; }
+.wm-node-badge { font-size: 10.5px; color: var(--muted); margin-top: 1px; }
+.wm-node.town .wm-node-badge { color: #ffd76a; }
+.wm-node.here .wm-node-badge b { color: var(--exp); }
 
 /* กระดานเควสย่อย */
 .sq-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
